@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<addon addon_id="CWS" title="Custom Widget System" version_string="Alpha 1" version_id="1" url="" install_callback_class="CWS_Install" install_callback_method="build" uninstall_callback_class="CWS_Install" uninstall_callback_method="destroy">
+  <admin_navigation>
+    <navigation navigation_id="cwsWidgetList" parent_navigation_id="cwsWidgets" display_order="1" link="widgets" admin_permission_id="option" debug_only="0" hide_no_children="0"/>
+    <navigation navigation_id="cwsWidgets" parent_navigation_id="setup" display_order="26" link="widgets" admin_permission_id="option" debug_only="0" hide_no_children="1"/>
+  </admin_navigation>
+  <admin_permissions/>
+  <admin_style_properties/>
+  <admin_templates>
+    <template title="cws_widget_list"><![CDATA[<xen:title>{xen:phrase cws_widgets}</xen:title>
+
+<xen:topctrl><a href="{xen:adminlink widgets/add}" class="button">+ {xen:phrase cws_create_new_widget}</a></xen:topctrl>
+
+<xen:require css="filter_list.css" />
+<xen:require js="js/xenforo/filter_list.js" />
+
+<xen:form action="{xen:adminlink widgets/toggle}" class="section AutoValidator">
+
+	<xen:if is="{$widgets}">
+		<h2 class="subHeading">
+			<xen:include template="filter_list_controls" />
+			{xen:phrase cws_widgets}
+		</h2>
+
+		<ol class="FilterList Scrollable">
+			<xen:foreach loop="$widgets" value="$widget">
+				<xen:listitem id="{$widget.widget_id}"
+					label="{$widget.title}"
+					labelclass="{xen:if '!{$widget.addonActive}', ' parentDisabled'}"
+					snippet="{$widget.addonTitle}"
+					href="{xen:adminlink 'widgets/edit', $widget}"
+					delete="{xen:adminlink 'widgets/delete', $widget}"
+					toggle="{$widget.active}"
+					toggletitle="{xen:phrase enable_disable_x, 'title={$widget.title}'}">
+					<xen:comment><xen:beforelabel>
+						<input type="hidden" name="widgetExists[{$widget.widget_id}]" value="1" />
+						<label class="Tooltip" data-offsetX="-2" data-offsetY="-3" title="{xen:phrase cws_enable_disable_this_widget}">
+							<input type="checkbox" name="widget[{$widget.widget_id}]" value="1" {xen:checked $widget.active} class="SubmitOnChange" />
+						</label>
+					</xen:beforelabel></xen:comment>
+				</xen:listitem>
+			</xen:foreach>
+		</ol>
+
+		<p class="sectionFooter">{xen:phrase showing_x_of_y_items, 'count=<span class="FilterListCount">{xen:count $widgets}</span>', 'total={xen:count $widgets}'}</p>
+
+	<xen:else />
+		<div class="noResults">{xen:phrase cws_no_widgets_have_been_created_yet}</div>
+	</xen:if>
+
+</xen:form>]]></template>
+    <template title="cws_widget_edit"><![CDATA[<xen:title>{xen:if '{$widget.widget_id}', '{xen:phrase cws_edit_widget}: {$widget.title}', '{xen:phrase cws_create_new_widget}'}</xen:title>
+
+<xen:if is="{$widget.widget_id}">
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink widgets}#{xen:helper listitemid, $widget.widget_id}">{$widget.title}</xen:breadcrumb>
+	</xen:navigation>
+</xen:if>
+
+<xen:form class="AutoValidator"
+	action="{xen:adminlink 'widgets/save', $widget}"
+	data-redirect="on">
+
+	<ul class="tabs Tabs" data-panes="#widgetPanes > li">
+		<li class="active"><a>{xen:phrase cws_widget_options}</a></li>
+		<li><a title="{xen:phrase cws_display_widget_if_user}" class="Tooltip">{xen:phrase user_criteria}</a></li>
+		<li><a title="{xen:phrase cws_display_widget_if_date}" class="Tooltip">{xen:phrase date_criteria}</a></li>
+		<li><a title="{xen:phrase cws_display_widget_if_page}" class="Tooltip">{xen:phrase page_criteria}</a></li>
+		<li><a title="{xen:phrase cws_display_widget_if_user}" class="Tooltip">{xen:phrase custom_userfield_criteria}</a></li>
+	</ul>
+	
+	<ul id="widgetPanes">
+		<li>
+			<xen:textboxunit label="{xen:phrase title}:" name="title" value="{$widget.title}" data-liveTitleTemplate="{xen:if {$widget.widget_id},
+				'{xen:phrase cws_edit_widget}: <em>%s</em>',
+				'{xen:phrase cws_create_new_widget}: <em>%s</em>'}">
+			</xen:textboxunit>
+				
+			<xen:controlunit label="{xen:phrase execute_callback}:">
+				<xen:textbox placeholder="{xen:phrase class}" name="callback_class" value="{$widget.callback_class}" size="25" />
+				::
+				<xen:textbox placeholder="{xen:phrase method}" name="callback_method" value="{$widget.callback_method}" size="25" />
+			</xen:controlunit>
+			
+			<xen:selectunit label="{xen:phrase position}:" name="position" value="{xen:if $widget.position, $widget.position, 'right_sidebar'}">
+				<xen:options source="$positionOptions" />
+			</xen:selectunit>
+
+			<fieldset>				
+				<xen:checkboxunit label="{xen:phrase options}:">
+					<xen:option name="dismissible" selected="{$widget.dismissible}" label="{xen:phrase cws_widget_may_be_dismissed}"
+						hint="{xen:phrase cws_users_may_hide_this_widget_when_they_have_read_it}" />
+					<xen:option name="active" selected="{$widget.active}" label="{xen:phrase cws_widget_is_active}"
+						hint="{xen:phrase cws_use_this_to_temporarily_disable_this_widget}" />
+				</xen:checkboxunit>
+				
+				<xen:spinboxunit label="{xen:phrase display_order}:" name="display_order" value="{$widget.display_order}" min="0" step="10" />				
+			</fieldset>
+
+			<xen:textboxunit label="{xen:phrase description}:" name="description" value="{$widget.description}" />
+
+			<xen:include template="helper_addon_unit" />
+		</li>		
+		<li><xen:include template="helper_criteria_user" /></li>
+		<li><xen:include template="helper_criteria_user_date" /></li>
+		<li><xen:include template="helper_criteria_page" /></li>
+		<li><xen:include template="helper_criteria_user_field" /></li>
+	</ul>
+	
+	<xen:submitunit save="{xen:phrase cws_save_widget}">
+		<xen:if is="{$widget.widget_id}"><a href="{xen:adminlink 'widgets/delete', $widget}" class="button OverlayTrigger">{xen:phrase cws_delete_widget}...</a></xen:if>
+	</xen:submitunit>
+	
+	<xen:controlunit label="{xen:phrase note}:">{xen:phrase cws_widget_shows_with_no_criteria}</xen:controlunit>
+</xen:form>]]></template>
+    <template title="cws_widget_delete"><![CDATA[<xen:title>{xen:phrase cws_confirm_deletion_of_widget}: {$widget.title}</xen:title>
+<xen:h1>{xen:phrase cws_confirm_deletion_of_widget}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:adminlink 'widgets/edit', $widget}">{$widget.title}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="delete_confirmation.css" />
+
+<xen:form action="{xen:adminlink 'widgets/delete', $widget}" class="deleteConfirmForm">
+	<p>{xen:phrase cws_please_confirm_that_you_want_to_delete_following_widget}:</p>
+	<strong><a href="{xen:adminlink 'widgets/edit', $widget}">{$widget.title}</a></strong>
+
+	<xen:submitunit save="{xen:phrase cws_delete_widget}" />
+
+	<input type="hidden" name="_xfConfirm" value="1" />
+</xen:form>]]></template>
+  </admin_templates>
+  <code_events/>
+  <code_event_listeners>
+    <listener event_id="controller_post_dispatch" execute_order="10" callback_class="CWS_Static" callback_method="controllerPostDispatch" active="1" description=""/>
+    <listener event_id="front_controller_pre_view" execute_order="10" callback_class="CWS_Static" callback_method="frontControllerPreView" active="1" description=""/>
+    <listener event_id="load_class_datawriter" execute_order="10" callback_class="CWS_Static" callback_method="loadClassDataWriter" active="1" description=""/>
+    <listener event_id="load_class_model" execute_order="10" callback_class="CWS_Static" callback_method="loadClassModel" active="1" description=""/>
+    <listener event_id="template_create" execute_order="10" callback_class="CWS_Static" callback_method="templateCreate" active="1" description=""/>
+  </code_event_listeners>
+  <cron/>
+  <email_templates/>
+  <optiongroups/>
+  <permissions>
+    <permission_groups/>
+    <permissions/>
+    <interface_groups/>
+  </permissions>
+  <phrases>
+    <phrase title="admin_navigation_cwsWidgets" version_id="1" version_string=""><![CDATA[Widgets]]></phrase>
+    <phrase title="admin_navigation_cwsWidgetList" version_id="1" version_string=""><![CDATA[Widget List]]></phrase>
+    <phrase title="cws_confirm_deletion_of_widget" version_id="1" version_string=""><![CDATA[Confirm deletion of widget]]></phrase>
+    <phrase title="cws_create_new_widget" version_id="1" version_string=""><![CDATA[Create new widget]]></phrase>
+    <phrase title="cws_delete_widget" version_id="1" version_string=""><![CDATA[Delete widget]]></phrase>
+    <phrase title="cws_display_widget_if_date" version_id="1" version_string=""><![CDATA[Display widget if date...]]></phrase>
+    <phrase title="cws_display_widget_if_page" version_id="1" version_string=""><![CDATA[Display widget if page...]]></phrase>
+    <phrase title="cws_display_widget_if_user" version_id="1" version_string=""><![CDATA[Display widget if user...]]></phrase>
+    <phrase title="cws_edit_widget" version_id="1" version_string=""><![CDATA[Edit widget]]></phrase>
+    <phrase title="cws_enable_disable_this_widget" version_id="1" version_string=""><![CDATA[Enable / Disable this widget]]></phrase>
+    <phrase title="cws_left_sidebar" version_id="1" version_string=""><![CDATA[Left Sidebar]]></phrase>
+    <phrase title="cws_no_widgets_have_been_created_yet" version_id="1" version_string=""><![CDATA[No widget have been created yet.]]></phrase>
+    <phrase title="cws_please_confirm_that_you_want_to_delete_following_widget" version_id="1" version_string=""><![CDATA[Please confirm that you want to delete the following widget]]></phrase>
+    <phrase title="cws_please_enter_title_using_only_alphanumeric_dot_space" version_id="1" version_string=""><![CDATA[Please enter a title using only a-z, A-Z, 0-9, _ and . characters and spaces.]]></phrase>
+    <phrase title="cws_requested_widget_not_found" version_id="1" version_string=""><![CDATA[The requested widget could not be found.]]></phrase>
+    <phrase title="cws_right_sidebar" version_id="1" version_string=""><![CDATA[Right Sidebar]]></phrase>
+    <phrase title="cws_save_widget" version_id="1" version_string=""><![CDATA[Save widget]]></phrase>
+    <phrase title="cws_users_may_hide_this_widget_when_they_have_read_it" version_id="1" version_string=""><![CDATA[Users may hide this widget when they have read it.]]></phrase>
+    <phrase title="cws_use_this_to_temporarily_disable_this_widget" version_id="1" version_string=""><![CDATA[Use this to temporarily disable this widget.]]></phrase>
+    <phrase title="cws_widget_is_active" version_id="1" version_string=""><![CDATA[Widget is active]]></phrase>
+    <phrase title="cws_widget_may_be_dismissed" version_id="1" version_string=""><![CDATA[Widget may be dismissed]]></phrase>
+    <phrase title="cws_widget_options" version_id="1" version_string=""><![CDATA[Widget Options]]></phrase>
+    <phrase title="cws_widget_shows_with_no_criteria" version_id="1" version_string=""><![CDATA[This widget will be displayed to all visitors if no criteria are specified.]]></phrase>
+    <phrase title="cws_widget_titles_must_be_unique" version_id="1" version_string=""><![CDATA[Widget titles must be unique. The specified title is already in use.]]></phrase>
+    <phrase title="cws_widgets" version_id="1" version_string=""><![CDATA[Widgets]]></phrase>
+  </phrases>
+  <route_prefixes>
+    <route_type type="admin">
+      <prefix original_prefix="widgets" class="CWS_Route_PrefixAdmin_Widgets" build_link="data_only"/>
+    </route_type>
+  </route_prefixes>
+  <style_properties/>
+  <templates>
+    <template title="cws.css" version_id="1" version_string=""><![CDATA[.cwsMain
+{
+    margin-left: {xen:calc '{xen:property sidebar.width} + 10'}px;
+}
+
+.cwsMain .tabs
+{
+    padding-left: 20px;
+    margin-bottom: 5px;
+}
+
+.cwsLeftSidebar
+{
+    {xen:property sidebar}
+    float: left;
+}
+
+.cwsLeftSidebar .secondaryContent
+{
+    margin-bottom: 10px;
+}
+
+.cwsLeftSidebar h3
+{
+    {xen:property sidebarBlockHeading}
+}]]></template>
+    <template title="cws_widget_forum_stats" version_id="1" version_string=""><![CDATA[<!-- block: forum_stats -->
+<div class="section">
+	<div class="secondaryContent statsList" id="boardStats">
+		<h3>{xen:phrase forum_statistics}</h3>
+		<div class="pairsJustified">
+			<dl class="discussionCount"><dt>{xen:phrase discussions}:</dt>
+				<dd>{xen:number $boardTotals.discussions}</dd></dl>
+			<dl class="messageCount"><dt>{xen:phrase messages}:</dt>
+				<dd>{xen:number $boardTotals.messages}</dd></dl>
+			<dl class="memberCount"><dt>{xen:phrase members_count}:</dt>
+				<dd>{xen:number $boardTotals.users}</dd></dl>
+			<dl><dt>{xen:phrase latest_member}:</dt>
+				<dd><xen:username user="$boardTotals.latestUser" /></dd></dl>
+			<!-- slot: forum_stats_extra -->
+		</div>
+	</div>
+</div>
+<!-- end block: forum_stats -->]]></template>
+    <template title="cws_widget_online_staff" version_id="1" version_string=""><![CDATA[<!-- block: sidebar_online_staff -->
+<xen:if hascontent="true">
+	<div class="section staffOnline avatarList">
+		<div class="secondaryContent">
+			<h3>{xen:phrase staff_online_now}</h3>
+			<ul>
+				<xen:contentcheck>
+					<xen:foreach loop="$onlineUsers.records" value="$user">
+						<xen:if is="{$user.is_moderator} OR {$user.is_admin}">
+							<li>
+								<xen:avatar user="$user" size="s" img="true" />
+								<xen:username user="$user" rich="true" />
+								<div class="userTitle">{xen:helper userTitle, $user}</div>
+							</li>
+						</xen:if>
+					</xen:foreach>
+				</xen:contentcheck>
+			</ul>
+		</div>
+	</div>
+</xen:if>
+<!-- end block: sidebar_online_staff -->]]></template>
+    <template title="cws_widget_online_users" version_id="1" version_string=""><![CDATA[<!-- block: sidebar_online_users -->
+<div class="section membersOnline userList">		
+	<div class="secondaryContent">
+		<h3><a href="{xen:link online}" title="{xen:phrase see_all_online_users}">{xen:phrase members_online_now}</a></h3>
+		
+		<xen:if is="{$onlineUsers.records}">
+		
+			<xen:if is="{$visitor.user_id}">
+				<xen:if hascontent="true">
+				<h4 class="minorHeading"><a href="{xen:link account/following}">{xen:phrase people_you_follow}:</a></h4>
+				<ul class="followedOnline">
+					<xen:contentcheck>
+						<xen:foreach loop="$onlineUsers.records" value="$user">
+							<xen:if is="{$user.followed}">
+								<li title="{$user.username}" class="Tooltip"><xen:avatar user="$user" size="s" img="true" class="_plainImage" /></li>
+							</xen:if>
+						</xen:foreach>
+					</xen:contentcheck>
+				</ul>
+				<h4 class="minorHeading"><a href="{xen:link members}">{xen:phrase members}:</a></h4>
+				</xen:if>
+			</xen:if>
+			
+			<ol class="listInline">
+				<xen:foreach loop="$onlineUsers.records" value="$user" i="$i">
+					<xen:if is="{$i} <= {$onlineUsers.limit}">
+						<li>
+						<xen:if is="{$user.user_id}">
+							<a href="{xen:link members, $user}"
+								class="username{xen:if '!{$user.visible}', ' invisible'}{xen:if {$user.followed}, ' followed'}">{$user.username}</a><xen:if is="{$i} < {$onlineUsers.limit}">,</xen:if>
+						<xen:else />
+							{xen:phrase guest}<xen:if is="{$i} < {$onlineUsers.limit}">,</xen:if>
+						</xen:if>
+						</li>
+					</xen:if>
+				</xen:foreach>
+				<xen:if is="{$onlineUsers.recordsUnseen}">
+					<li class="moreLink">... <a href="{xen:link online}" title="{xen:phrase see_all_visitors}">{xen:phrase and_x_more, 'count={xen:number $onlineUsers.recordsUnseen}'}</a></li>
+				</xen:if>
+			</ol>
+		</xen:if>
+		
+		<div class="footnote">
+			{xen:phrase online_now_x_members_y_guests_z, 'total={xen:number $onlineUsers.total}', 'members={xen:number $onlineUsers.members}', 'guests={xen:number $onlineUsers.guests}'}
+		</div>
+	</div>
+</div>
+<!-- end block: sidebar_online_users -->]]></template>
+  </templates>
+  <bb_code_media_sites/>
+  <widgets>
+    <widget title="Default Sidebar" description="Default XenForo Sidebar" callback_class="CWS_ControllerWidget_Default" callback_method="actionDefaultSidebar" dismissible="0" active="0" position="right_sidebar" display_order="0">
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:0:{}]]></page_criteria>
+    </widget>
+    <widget title="Forum Stats" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionBoardTotals" dismissible="0" active="1" position="left_sidebar" display_order="30">
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:0:{}]]></page_criteria>
+    </widget>
+    <widget title="Online Staff" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionOnlineStaff" dismissible="0" active="1" position="left_sidebar" display_order="10">
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
+    </widget>
+    <widget title="Online Users" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionOnlineUsers" dismissible="0" active="1" position="left_sidebar" display_order="20">
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
+    </widget>
+    <widget title="Share Page" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionSharePage" dismissible="0" active="1" position="left_sidebar" display_order="40">
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
+    </widget>
+  </widgets>
+  <template_modifications>
+    <modification title="cws_page_container" template_title="PAGE_CONTAINER" execute_order="10" modification_type="preg_replace" callback_class="" callback_method="" description="" version_id="1" version_string="" active="1">
+      <search_value><![CDATA[#<!DOCTYPE html>(.*){xen:raw \$contents}(.*){xen:raw \$sidebar}#s]]></search_value>
+      <replace_value><![CDATA[<!DOCTYPE html>
+
+<xen:require css="cws.css" />
+
+<xen:set var="$sidebar">{xen:if $widgets.right_sidebar, '<!--right sidebar-->'}</xen:set>
+
+$1
+
+<xen:if is="{$widgets.left_sidebar}">
+<div class="cwsLeftSidebar sidebar"><xen:foreach loop="$widgets.left_sidebar" value="$leftWidget">{xen:raw $leftWidget}</xen:foreach></div>
+
+<div class="cwsMain section">
+</xen:if>
+
+    {xen:raw $contents}
+
+<xen:if is="{$widgets.left_sidebar}">
+</div>
+</xen:if>
+
+$2
+
+<xen:foreach loop="$widgets.right_sidebar" value="$rightWidget">{xen:raw $rightWidget}</xen:foreach>]]></replace_value>
+    </modification>
+  </template_modifications>
+</addon>
