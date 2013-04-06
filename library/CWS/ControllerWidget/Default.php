@@ -8,8 +8,8 @@ class CWS_ControllerWidget_Default extends CWS_ControllerWidget_Abstract
     }
 
 
-	public function actionOnlineUsers()
-	{
+    public function actionOnlineUsers()
+    {
         $visitor = XenForo_Visitor::getInstance();
 
         /* @var $sessionModel XenForo_Model_Session */
@@ -23,7 +23,7 @@ class CWS_ControllerWidget_Default extends CWS_ControllerWidget_Abstract
             );
 
         return $this->responseView('CWS_ViewWidget_Default', 'cws_widget_online_users', $this->_params);
-	}
+    }
 
     public function actionOnlineStaff()
     {
@@ -46,12 +46,10 @@ class CWS_ControllerWidget_Default extends CWS_ControllerWidget_Abstract
     {
         $this->_params['boardTotals'] = isset($this->_params['boardTotals']) ? $this->_params['boardTotals'] : null;
 
-        if($this->_params['boardTotals'] === null)
-        {
+        if ($this->_params['boardTotals'] === null) {
             $this->_params['boardTotals'] = $this->getModelFromCache('XenForo_Model_DataRegistry')->get('boardTotals');
 
-            if (!$this->_params['boardTotals'])
-            {
+            if (!$this->_params['boardTotals']) {
                 $this->_params['boardTotals'] = $this->getModelFromCache('XenForo_Model_Counters')->rebuildBoardTotalsCounter();
             }
         }

@@ -1,27 +1,27 @@
 <?php
 
 /**
-* Concrete renderer for HTML output.
-*
-* @package XenForo_Mvc
-*/
+ * Concrete renderer for HTML output.
+ *
+ * @package XenForo_Mvc
+ */
 class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 {
-	protected $_controllerWidgetCache = array();
+    protected $_controllerWidgetCache = array();
     protected $_params = array();
 
-	/**
-	 * Constructor
-	 * @see XenForo_ViewRenderer_Abstract::__construct()
-	 */
-	public function __construct(XenForo_ViewRenderer_HtmlPublic $viewRenderer)
-	{
-		$this->_contentTemplate = $viewRenderer->_contentTemplate;
+    /**
+     * Constructor
+     * @see XenForo_ViewRenderer_Abstract::__construct()
+     */
+    public function __construct(XenForo_ViewRenderer_HtmlPublic $viewRenderer)
+    {
+        $this->_contentTemplate = $viewRenderer->_contentTemplate;
         $this->_dependencies = $viewRenderer->_dependencies;
         $this->_needsContainer = $viewRenderer->_needsContainer;
         $this->_request = $viewRenderer->_request;
         $this->_response = $viewRenderer->_response;
-	}
+    }
 
     protected function _getNoticesContainerParams(XenForo_Template_Abstract $template, array $containerData)
     {
@@ -32,20 +32,17 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 
         $user = XenForo_Visitor::getInstance()->toArray();
 
-        if (XenForo_Application::isRegistered('session'))
-        {
+        if (XenForo_Application::isRegistered('session')) {
             $dismissedWidgets = XenForo_Application::getSession()->get('dismissedWidgets');
         }
 
-        if (!isset($dismissedWidgets) || !is_array($dismissedWidgets))
-        {
+        if (!isset($dismissedWidgets) || !is_array($dismissedWidgets)) {
             $dismissedWidgets = array();
         }
 
         $this->_params = XenForo_Application::mapMerge($template->getParams(), $containerData, CWS_Static::$controllerResponse->params);
 
-        foreach ($allWidgets AS $widgetId => $widget)
-        {
+        foreach ($allWidgets AS $widgetId => $widget) {
             $widgetPosition = $widget['position'];
             $widgetCallback = array($widget['callback_class'], $widget['callback_method']);
 
@@ -53,8 +50,7 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
                 && XenForo_Helper_Criteria::userMatchesCriteria($widget['user_criteria'], true, $user)
                 && XenForo_Helper_Criteria::pageMatchesCriteria($widget['page_criteria'], true, $template->getParams(), $containerData)
                 && is_callable($widgetCallback)
-            )
-            {
+            ) {
                 $widgetController = $this->getControllerWidgetFromCache($widget['callback_class']);
 
                 $widgetControllerResponse = call_user_func_array(
@@ -62,17 +58,14 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
                     array()
                 );
 
-                if($widgetControllerResponse instanceof XenForo_ControllerResponse_View)
-                {
+                if ($widgetControllerResponse instanceof XenForo_ControllerResponse_View) {
                     $widgets[$widgetPosition][$widgetId] = $this->renderView(
                         $widgetControllerResponse->viewName,
                         $widgetControllerResponse->params,
                         $widgetControllerResponse->templateName,
                         $widgetControllerResponse->subView
                     );
-                }
-                elseif($widgetControllerResponse)
-                {
+                } elseif ($widgetControllerResponse) {
                     $widgets[$widgetPosition][$widgetId] = $widgetControllerResponse;
                 }
 
@@ -94,8 +87,7 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
      */
     public function getControllerWidgetFromCache($class)
     {
-        if (!isset($this->_controllerWidgetCache[$class]))
-        {
+        if (!isset($this->_controllerWidgetCache[$class])) {
             $this->_controllerWidgetCache[$class] = new $class(CWS_Static::$controller, $this->_params);
         }
 

@@ -19,6 +19,6 @@ class CWS_ControllerWidget_Abstract extends XenForo_ControllerPublic_Abstract
         $this->_viewStateChanges = $controller->_viewStateChanges;
         $this->_modelCache = $controller->_modelCache;
 
-        $this->_params = &$params;
+        $this->_params = & $params;
     }
 }
