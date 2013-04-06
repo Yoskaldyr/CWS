@@ -15,7 +15,7 @@ class CWS_DataWriter_AddOn extends XFCP_CWS_DataWriter_AddOn
 	{
 		parent::_postSave();
 
-		if($this->isUpdate() && $this->isChanged('addon_id'))
+		if ($this->isUpdate() && $this->isChanged('addon_id'))
 		{
 			$db = $this->_db;
 			$updateClause = 'addon_id = ' . $db->quote($this->getExisting('addon_id'));

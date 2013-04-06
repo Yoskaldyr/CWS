@@ -21,7 +21,27 @@ class CWS_DataWriter_Widget extends XenForo_DataWriter
 	 */
 	protected function _getFields()
 	{
-		return array('cws_widget' => array('widget_id' => array('type' => self::TYPE_UINT, 'autoIncrement' => true), 'title' => array('type' => self::TYPE_STRING, 'required' => true, 'maxLength' => 150, 'requiredError' => 'please_enter_valid_title'), 'description' => array('type' => self::TYPE_STRING, 'default' => ''), 'callback_class' => array('type' => self::TYPE_STRING, 'maxLength' => 75, 'required' => true, 'requiredError' => 'please_enter_valid_callback_class'), 'callback_method' => array('type' => self::TYPE_STRING, 'maxLength' => 50, 'required' => true, 'requiredError' => 'please_enter_valid_callback_method'), 'dismissible' => array('type' => self::TYPE_BOOLEAN, 'default' => 1), 'active' => array('type' => self::TYPE_BOOLEAN, 'default' => 1), 'position' => array('type' => self::TYPE_STRING, 'default' => 'right_sidebar'), 'display_order' => array('type' => self::TYPE_UINT, 'default' => 1), 'user_criteria' => array('type' => self::TYPE_UNKNOWN, 'required' => true, 'verification' => array('$this', '_verifyCriteria')), 'page_criteria' => array('type' => self::TYPE_UNKNOWN, 'required' => true, 'verification' => array('$this', '_verifyCriteria')), 'addon_id' => array('type' => self::TYPE_STRING, 'maxLength' => 25, 'default' => ''),));
+		return array(
+			'cws_widget' => array(
+				'widget_id' => array('type' => self::TYPE_UINT, 'autoIncrement' => true),
+				'title' => array('type' => self::TYPE_STRING, 'required' => true, 'maxLength' => 150,
+					'requiredError' => 'please_enter_valid_title'),
+				'description' => array('type' => self::TYPE_STRING, 'default' => ''),
+				'callback_class' => array('type' => self::TYPE_STRING, 'maxLength' => 75, 'required' => true,
+					'requiredError' => 'please_enter_valid_callback_class'),
+				'callback_method' => array('type' => self::TYPE_STRING, 'maxLength' => 50, 'required' => true,
+					'requiredError' => 'please_enter_valid_callback_method'),
+				'dismissible' => array('type' => self::TYPE_BOOLEAN, 'default' => 1),
+				'active' => array('type' => self::TYPE_BOOLEAN, 'default' => 1),
+				'position' => array('type' => self::TYPE_STRING, 'default' => 'right_sidebar'),
+				'display_order' => array('type' => self::TYPE_UINT, 'default' => 1),
+				'user_criteria' => array('type' => self::TYPE_UNKNOWN, 'required' => true,
+					'verification' => array('$this', '_verifyCriteria')),
+				'page_criteria' => array('type' => self::TYPE_UNKNOWN, 'required' => true,
+					'verification' => array('$this', '_verifyCriteria')),
+				'addon_id' => array('type' => self::TYPE_STRING, 'maxLength' => 25, 'default' => ''),
+			)
+		);
 	}
 
 	/**
@@ -33,7 +53,7 @@ class CWS_DataWriter_Widget extends XenForo_DataWriter
 	 */
 	protected function _getExistingData($data)
 	{
-		if(!$id = $this->_getExistingPrimaryKey($data))
+		if (!$id = $this->_getExistingPrimaryKey($data))
 		{
 			return false;
 		}
@@ -61,7 +81,7 @@ class CWS_DataWriter_Widget extends XenForo_DataWriter
 	protected function _verifyPrepareTitle(&$title)
 	{
 		$title = trim($title);
-		if(preg_match('/[^a-zA-Z0-9_ \.]/', $title))
+		if (preg_match('/[^a-zA-Z0-9_ \.]/', $title))
 		{
 			$this->error(new XenForo_Phrase('cws_please_enter_title_using_only_alphanumeric_dot_space'), 'title');
 			return false;
@@ -87,22 +107,22 @@ class CWS_DataWriter_Widget extends XenForo_DataWriter
 
 	protected function _preSave()
 	{
-		if($this->isChanged('callback_class') || $this->isChanged('callback_method'))
+		if ($this->isChanged('callback_class') || $this->isChanged('callback_method'))
 		{
 			$class = $this->get('callback_class');
 			$method = $this->get('callback_method');
 
-			if(!XenForo_Application::autoload($class) || !method_exists($class, $method))
+			if (!XenForo_Application::autoload($class) || !method_exists($class, $method))
 			{
 				$this->error(new XenForo_Phrase('please_enter_valid_callback_method'), 'callback_method');
 			}
 		}
 
-		if($this->getOption(self::OPTION_CHECK_DUPLICATE) && $this->isChanged('title'))
+		if ($this->getOption(self::OPTION_CHECK_DUPLICATE) && $this->isChanged('title'))
 		{
 			$titleConflict = $this->_getWidgetModel()->getWidgetByTitle($this->getNew('title'));
 
-			if($titleConflict)
+			if ($titleConflict)
 			{
 				$this->error(new XenForo_Phrase('cws_widget_titles_must_be_unique'), 'title');
 			}

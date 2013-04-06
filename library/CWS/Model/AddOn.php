@@ -45,7 +45,7 @@ class CWS_Model_AddOn extends XFCP_CWS_Model_AddOn
 	{
 		parent::deleteAddOnMasterData($addOnId);
 
-		if($addOnId != 'CWS')
+		if ($addOnId != 'CWS')
 		{
 			$this->_getWidgetModel()->deleteWidgetsForAddOn($addOnId);
 		}

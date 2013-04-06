@@ -21,22 +21,22 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 
 		$positionOptions = array('left_sidebar' => new XenForo_Phrase('cws_left_sidebar'), 'right_sidebar' => new XenForo_Phrase('cws_right_sidebar'));
 
-		if(empty($positionOptions[$widget['position']]))
+		if (empty($positionOptions[$widget['position']]))
 		{
 			$positionOptions[$widget['position']] = $widget['position'];
 		}
 
-		$viewParams = array('widget' => $widget,
-
-			'userCriteria' => XenForo_Helper_Criteria::prepareCriteriaForSelection($widget['user_criteria']), 'userCriteriaData' => XenForo_Helper_Criteria::getDataForUserCriteriaSelection(),
-
-			'pageCriteria' => XenForo_Helper_Criteria::prepareCriteriaForSelection($widget['page_criteria']), 'pageCriteriaData' => XenForo_Helper_Criteria::getDataForPageCriteriaSelection(),
-
+		$viewParams = array(
+			'widget' => $widget,
+			'userCriteria' => XenForo_Helper_Criteria::prepareCriteriaForSelection($widget['user_criteria']),
+			'userCriteriaData' => XenForo_Helper_Criteria::getDataForUserCriteriaSelection(),
+			'pageCriteria' => XenForo_Helper_Criteria::prepareCriteriaForSelection($widget['page_criteria']),
+			'pageCriteriaData' => XenForo_Helper_Criteria::getDataForPageCriteriaSelection(),
 			'showInactiveCriteria' => true,
-
 			'positionOptions' => $positionOptions,
-
-			'addOnOptions' => $addOnModel->getAddOnOptionsListIfAvailable(true, false), 'addOnSelected' => (isset($widget['addon_id']) ? $widget['addon_id'] : $addOnModel->getDefaultAddOnId()));
+			'addOnOptions' => $addOnModel->getAddOnOptionsListIfAvailable(true, false),
+			'addOnSelected' => (isset($widget['addon_id']) ? $widget['addon_id'] : $addOnModel->getDefaultAddOnId())
+		);
 
 		return $this->responseView('XenForo_ViewAdmin_Widget_Edit', 'cws_widget_edit', $viewParams);
 	}
@@ -60,10 +60,22 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 
 		$widgetId = $this->_input->filterSingle('widget_id', XenForo_Input::UINT);
 
-		$data = $this->_input->filter(array('title' => XenForo_Input::STRING, 'description' => XenForo_Input::STRING, 'callback_class' => XenForo_Input::STRING, 'callback_method' => XenForo_Input::STRING, 'dismissible' => XenForo_Input::UINT, 'active' => XenForo_Input::UINT, 'position' => XenForo_Input::STRING, 'display_order' => XenForo_Input::UINT, 'user_criteria' => XenForo_Input::ARRAY_SIMPLE, 'page_criteria' => XenForo_Input::ARRAY_SIMPLE, 'addon_id' => XenForo_Input::STRING,));
+		$data = $this->_input->filter(array(
+			'title' => XenForo_Input::STRING,
+			'description' => XenForo_Input::STRING,
+			'callback_class' => XenForo_Input::STRING,
+			'callback_method' => XenForo_Input::STRING,
+			'dismissible' => XenForo_Input::UINT,
+			'active' => XenForo_Input::UINT,
+			'position' => XenForo_Input::STRING,
+			'display_order' => XenForo_Input::UINT,
+			'user_criteria' => XenForo_Input::ARRAY_SIMPLE,
+			'page_criteria' => XenForo_Input::ARRAY_SIMPLE,
+			'addon_id' => XenForo_Input::STRING,)
+		);
 
 		$dw = XenForo_DataWriter::create('CWS_DataWriter_Widget');
-		if($widgetId)
+		if ($widgetId)
 		{
 			$dw->setExistingData($widgetId);
 		}
@@ -79,11 +91,10 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 	{
 		$widgetId = $this->_input->filterSingle('widget_id', XenForo_Input::UINT);
 
-		if($this->isConfirmedPost())
+		if ($this->isConfirmedPost())
 		{
 			return $this->_deleteData('CWS_DataWriter_Widget', 'widget_id', XenForo_Link::buildAdminLink('widgets'));
-		}
-		else
+		} else
 		{
 			$viewParams = array('widget' => $this->_getWidgetOrError($widgetId));
 
@@ -113,7 +124,7 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 		$widgetModel = $this->_getWidgetModel();
 
 		$widget = $widgetModel->getWidgetById($widgetId);
-		if(!$widget)
+		if (!$widget)
 		{
 			throw $this->responseException($this->responseError(new XenForo_Phrase('cws_requested_widget_not_found'), 404));
 		}

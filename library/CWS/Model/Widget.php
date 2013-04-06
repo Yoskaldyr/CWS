@@ -20,15 +20,20 @@ class CWS_Model_Widget extends XenForo_Model
 
 	public function getDefaultWidget()
 	{
-		return array('widget_id' => 0,
-
-			'title' => '', 'description' => '',
-
-			'user_criteria' => '', 'userCriteriaList' => array(),
-
-			'page_criteria' => '', 'pageCriteriaList' => array(),
-
-			'active' => 1, 'dismissible' => 0, 'display_order' => 1, 'position' => 'right_sidebar', 'addon_id' => '',);
+		return array(
+			'widget_id' => 0,
+			'title' => '',
+			'description' => '',
+			'user_criteria' => '',
+			'userCriteriaList' => array(),
+			'page_criteria' => '',
+			'pageCriteriaList' => array(),
+			'active' => 1,
+			'dismissible' => 0,
+			'display_order' => 1,
+			'position' => 'right_sidebar',
+			'addon_id' => '',
+		);
 	}
 
 	/**
@@ -56,11 +61,20 @@ class CWS_Model_Widget extends XenForo_Model
 	{
 		$cache = array();
 
-		foreach($this->getAllWidgets() AS $widgetId => $widget)
+		foreach ($this->getAllWidgets() AS $widgetId => $widget)
 		{
-			if($widget['active'] && $widget['addonActive'])
+			if ($widget['active'] && $widget['addonActive'])
 			{
-				$cache[$widgetId] = array('title' => $widget['title'], 'description' => $widget['description'], 'callback_class' => $widget['callback_class'], 'callback_method' => $widget['callback_method'], 'dismissible' => $widget['dismissible'], 'position' => $widget['position'], 'user_criteria' => XenForo_Helper_Criteria::unserializeCriteria($widget['user_criteria']), 'page_criteria' => XenForo_Helper_Criteria::unserializeCriteria($widget['page_criteria']), 'addon_id' => $widget['addon_id'],);
+				$cache[$widgetId] = array(
+					'title' => $widget['title'],
+					'description' => $widget['description'],
+					'callback_class' => $widget['callback_class'],
+					'callback_method' => $widget['callback_method'],
+					'dismissible' => $widget['dismissible'],
+					'position' => $widget['position'],
+					'user_criteria' => XenForo_Helper_Criteria::unserializeCriteria($widget['user_criteria']),
+					'page_criteria' => XenForo_Helper_Criteria::unserializeCriteria($widget['page_criteria']),
+					'addon_id' => $widget['addon_id'],);
 			}
 		}
 
@@ -72,7 +86,7 @@ class CWS_Model_Widget extends XenForo_Model
 	{
 		$this->standardizeViewingUserReference($viewingUser);
 
-		if(empty($viewingUser['user_id']) || empty($widget['dismissible']))
+		if (empty($viewingUser['user_id']) || empty($widget['dismissible']))
 		{
 			$errorPhraseKey = 'cws_you_may_not_dismiss_this_widget';
 			return false;
@@ -83,12 +97,12 @@ class CWS_Model_Widget extends XenForo_Model
 
 	public function dismissWidget($widgetId, $userId = null)
 	{
-		if(empty($userId))
+		if (empty($userId))
 		{
 			$userId = XenForo_Visitor::getUserId();
 		}
 
-		if(!$userId)
+		if (!$userId)
 		{
 			return;
 		}
@@ -109,7 +123,7 @@ class CWS_Model_Widget extends XenForo_Model
 	{
 		$this->standardizeViewingUserReference($user);
 
-		if(!$user['user_id'])
+		if (!$user['user_id'])
 		{
 			return;
 		}
@@ -125,7 +139,7 @@ class CWS_Model_Widget extends XenForo_Model
 
 		// leave it for future if needed
 
-		if(!$userId)
+		if (!$userId)
 		{
 			return array();
 		}
@@ -185,7 +199,7 @@ class CWS_Model_Widget extends XenForo_Model
 	 */
 	public function getWidgetsByTitles(array $titles)
 	{
-		if(!$titles)
+		if (!$titles)
 		{
 			return array();
 		}
@@ -252,24 +266,36 @@ class CWS_Model_Widget extends XenForo_Model
 		$widgets = XenForo_Helper_DevelopmentXml::fixPhpBug50670($xml->widget);
 
 		$titles = array();
-		foreach($widgets AS $widget)
+		foreach ($widgets AS $widget)
 		{
 			$titles[] = (string)$widget['title'];
 		}
 
 		$existingWidgets = $this->getWidgetsByTitles($titles);
 
-		foreach($widgets AS $widget)
+		foreach ($widgets AS $widget)
 		{
 			$widgetName = (string)$widget['title'];
 
 			$dw = XenForo_DataWriter::create('CWS_DataWriter_Widget');
-			if(isset($existingWidgets[$widgetName]))
+			if (isset($existingWidgets[$widgetName]))
 			{
 				$dw->setExistingData($existingWidgets[$widgetName], true);
 			}
 			$dw->setOption(CWS_DataWriter_Widget::OPTION_CHECK_DUPLICATE, false);
-			$dw->bulkSet(array('title' => $widgetName, 'description' => (string)$widget['description'], 'callback_class' => (string)$widget['callback_class'], 'callback_method' => (string)$widget['callback_method'], 'dismissible' => (int)$widget['dismissible'], 'active' => (int)$widget['active'], 'position' => (string)$widget['position'], 'display_order' => (int)$widget['display_order'], 'user_criteria' => XenForo_Helper_DevelopmentXml::processSimpleXmlCdata($widget->user_criteria), 'page_criteria' => XenForo_Helper_DevelopmentXml::processSimpleXmlCdata($widget->page_criteria), 'addon_id' => $addOnId,));
+			$dw->bulkSet(array(
+				'title' => $widgetName,
+				'description' => (string)$widget['description'],
+				'callback_class' => (string)$widget['callback_class'],
+				'callback_method' => (string)$widget['callback_method'],
+				'dismissible' => (int)$widget['dismissible'],
+				'active' => (int)$widget['active'],
+				'position' => (string)$widget['position'],
+				'display_order' => (int)$widget['display_order'],
+				'user_criteria' => XenForo_Helper_DevelopmentXml::processSimpleXmlCdata($widget->user_criteria),
+				'page_criteria' => XenForo_Helper_DevelopmentXml::processSimpleXmlCdata($widget->page_criteria),
+				'addon_id' => $addOnId,
+			));
 			$dw->save();
 
 		}
@@ -290,7 +316,7 @@ class CWS_Model_Widget extends XenForo_Model
 		$document = $rootNode->ownerDocument;
 
 		$widgets = $this->getWidgetsByAddOn($addOnId);
-		foreach($widgets AS $widget)
+		foreach ($widgets AS $widget)
 		{
 			$widgetNode = $document->createElement('widget');
 			$widgetNode->setAttribute('title', $widget['title']);

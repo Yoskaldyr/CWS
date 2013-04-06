@@ -11,7 +11,7 @@ class CWS_Install
 
 	public static final function getInstance()
 	{
-		if(!self::$_instance)
+		if (!self::$_instance)
 		{
 			self::$_instance = new self;
 		}
@@ -24,7 +24,7 @@ class CWS_Install
 	 */
 	protected function _getDb()
 	{
-		if($this->_db === null)
+		if ($this->_db === null)
 		{
 			$this->_db = XenForo_Application::getDb();
 		}
@@ -34,7 +34,7 @@ class CWS_Install
 
 	public static function build($existingAddOn, $addOnData)
 	{
-		if(XenForo_Application::$versionId < 1010370)
+		if (XenForo_Application::$versionId < 1010370)
 		{
 			// note: this can't be phrased
 			throw new XenForo_Exception('This add-on requires XenForo 1.1.3 or higher.', true);
@@ -43,7 +43,7 @@ class CWS_Install
 		/* @var $addOnModel XenForo_Model_AddOn */
 		$addOnModel = XenForo_Model::create('XenForo_Model_AddOn');
 
-		if(!$addOnModel->getAddOnById('TMS'))
+		if (!$addOnModel->getAddOnById('TMS'))
 		{
 			throw new XenForo_Exception('This add-on requires TMS.', true);
 		}
@@ -51,7 +51,7 @@ class CWS_Install
 		$startVersion = 1;
 		$endVersion = $addOnData['version_id'];
 
-		if($existingAddOn)
+		if ($existingAddOn)
 		{
 			$startVersion = $existingAddOn['version_id'] + 1;
 		}
@@ -61,11 +61,11 @@ class CWS_Install
 		$db = XenForo_Application::getDb();
 		XenForo_Db::beginTransaction($db);
 
-		for($i = $startVersion; $i <= $endVersion; $i++)
+		for ($i = $startVersion; $i <= $endVersion; $i++)
 		{
 			$method = '_installVersion' . $i;
 
-			if(method_exists($install, $method) === false)
+			if (method_exists($install, $method) === false)
 			{
 				continue;
 			}
@@ -111,11 +111,11 @@ class CWS_Install
 		$db = XenForo_Application::getDb();
 		XenForo_Db::beginTransaction($db);
 
-		for($i = 1; $i <= $lastUninstallStep; $i++)
+		for ($i = 1; $i <= $lastUninstallStep; $i++)
 		{
 			$method = '_uninstallStep' . $i;
 
-			if(method_exists($uninstall, $method) === false)
+			if (method_exists($uninstall, $method) === false)
 			{
 				continue;
 			}
