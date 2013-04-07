@@ -31,6 +31,7 @@ class CWS_DataWriter_Widget extends XenForo_DataWriter
 					'requiredError' => 'please_enter_valid_callback_class'),
 				'callback_method' => array('type' => self::TYPE_STRING, 'maxLength' => 50, 'required' => true,
 					'requiredError' => 'please_enter_valid_callback_method'),
+				'argument' => array('type' => self::TYPE_STRING, 'default' => ''),
 				'dismissible' => array('type' => self::TYPE_BOOLEAN, 'default' => 1),
 				'active' => array('type' => self::TYPE_BOOLEAN, 'default' => 1),
 				'position' => array('type' => self::TYPE_STRING, 'default' => 'right_sidebar'),

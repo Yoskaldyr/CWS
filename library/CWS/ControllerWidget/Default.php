@@ -2,6 +2,16 @@
 
 class CWS_ControllerWidget_Default extends CWS_ControllerWidget_Abstract
 {
+	public function actionHtml($argument = '')
+	{
+		return $argument;
+	}
+
+	public function actionTemplate($argument = '')
+	{
+		return $this->responseView('CWS_ViewWidget_Default', $argument, self::$params);
+	}
+
 	public function actionDefaultSidebar()
 	{
 		return !empty(self::$params['sidebar']) ? self::$params['sidebar'] : '';

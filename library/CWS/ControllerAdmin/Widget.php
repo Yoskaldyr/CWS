@@ -65,6 +65,7 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 			'description' => XenForo_Input::STRING,
 			'callback_class' => XenForo_Input::STRING,
 			'callback_method' => XenForo_Input::STRING,
+			'argument' => XenForo_Input::STRING,
 			'dismissible' => XenForo_Input::UINT,
 			'active' => XenForo_Input::UINT,
 			'position' => XenForo_Input::STRING,

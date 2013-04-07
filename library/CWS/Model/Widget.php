@@ -28,6 +28,7 @@ class CWS_Model_Widget extends XenForo_Model
 			'userCriteriaList' => array(),
 			'page_criteria' => '',
 			'pageCriteriaList' => array(),
+			'argument' => '',
 			'active' => 1,
 			'dismissible' => 0,
 			'display_order' => 1,
@@ -45,7 +46,7 @@ class CWS_Model_Widget extends XenForo_Model
 	{
 		return $this->fetchAllKeyed('
 			SELECT widget.*,
-			addon.addon_id, addon.title AS addonTitle, addon.active AS addonActive
+			addon.addon_id, addon.title AS addonTitle, IF(addon.addon_id, addon.active, 1) AS addonActive
 			FROM cws_widget AS widget
 			LEFT JOIN xf_addon AS addon ON (addon.addon_id = widget.addon_id)
 			ORDER BY display_order
@@ -70,6 +71,7 @@ class CWS_Model_Widget extends XenForo_Model
 					'description' => $widget['description'],
 					'callback_class' => $widget['callback_class'],
 					'callback_method' => $widget['callback_method'],
+					'argument' => $widget['argument'],
 					'dismissible' => $widget['dismissible'],
 					'position' => $widget['position'],
 					'user_criteria' => XenForo_Helper_Criteria::unserializeCriteria($widget['user_criteria']),
@@ -288,6 +290,7 @@ class CWS_Model_Widget extends XenForo_Model
 				'description' => (string)$widget['description'],
 				'callback_class' => (string)$widget['callback_class'],
 				'callback_method' => (string)$widget['callback_method'],
+				'argument' => (string)$widget['argument'],
 				'dismissible' => (int)$widget['dismissible'],
 				'active' => (int)$widget['active'],
 				'position' => (string)$widget['position'],
@@ -323,6 +326,7 @@ class CWS_Model_Widget extends XenForo_Model
 			$widgetNode->setAttribute('description', $widget['description']);
 			$widgetNode->setAttribute('callback_class', $widget['callback_class']);
 			$widgetNode->setAttribute('callback_method', $widget['callback_method']);
+			$widgetNode->setAttribute('argument', $widget['argument']);
 			$widgetNode->setAttribute('dismissible', $widget['dismissible']);
 			$widgetNode->setAttribute('active', $widget['active']);
 			$widgetNode->setAttribute('position', $widget['position']);

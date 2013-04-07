@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="CWS" title="Custom Widget System" version_string="Alpha 2" version_id="1" url="" install_callback_class="CWS_Install" install_callback_method="build" uninstall_callback_class="CWS_Install" uninstall_callback_method="destroy">
+<addon addon_id="CWS" title="Custom Widget System" version_string="Alpha 3" version_id="2" url="" install_callback_class="CWS_Install" install_callback_method="build" uninstall_callback_class="CWS_Install" uninstall_callback_method="destroy">
   <admin_navigation>
     <navigation navigation_id="cwsWidgetList" parent_navigation_id="cwsWidgets" display_order="1" link="widgets" admin_permission_id="option" debug_only="0" hide_no_children="0"/>
     <navigation navigation_id="cwsWidgets" parent_navigation_id="setup" display_order="26" link="widgets" admin_permission_id="option" debug_only="0" hide_no_children="1"/>
@@ -81,6 +81,8 @@
 				::
 				<xen:textbox placeholder="{xen:phrase method}" name="callback_method" value="{$widget.callback_method}" size="25" />
 			</xen:controlunit>
+
+			<xen:textboxunit label="{xen:phrase cws_argument}:" name="argument" value="{$widget.argument}" rows="1" inputclass="Elastic" />
 			
 			<xen:selectunit label="{xen:phrase position}:" name="position" value="{xen:if $widget.position, $widget.position, 'right_sidebar'}">
 				<xen:options source="$positionOptions" />
@@ -150,6 +152,7 @@
   <phrases>
     <phrase title="admin_navigation_cwsWidgets" version_id="1" version_string=""><![CDATA[Widgets]]></phrase>
     <phrase title="admin_navigation_cwsWidgetList" version_id="1" version_string=""><![CDATA[Widget List]]></phrase>
+    <phrase title="cws_argument" version_id="1" version_string="Alpha 2"><![CDATA[Argument]]></phrase>
     <phrase title="cws_confirm_deletion_of_widget" version_id="1" version_string=""><![CDATA[Confirm deletion of widget]]></phrase>
     <phrase title="cws_create_new_widget" version_id="1" version_string=""><![CDATA[Create new widget]]></phrase>
     <phrase title="cws_delete_widget" version_id="1" version_string=""><![CDATA[Delete widget]]></phrase>
@@ -295,28 +298,46 @@
 	</div>
 </div>
 <!-- end block: sidebar_online_users -->]]></template>
+    <template title="cws_widget_template" version_id="2" version_string="Alpha 3"><![CDATA[<div class="section">
+		<div class="secondaryContent">
+				<h3>Template Block</h3>
+				<p>This is Template block.</p>
+				<p>You can set any template info here.</p>
+				<p>Parameters are merge result of inner and container parameters.</p>
+				<p>Argument of the widget is template name.</p>		
+				<p>Test: majorSection = {$majorSection}.</p>		
+		</div>
+</div>]]></template>
   </templates>
   <bb_code_media_sites/>
   <widgets>
-    <widget title="Default Sidebar" description="Default XenForo Sidebar" callback_class="CWS_ControllerWidget_Default" callback_method="actionDefaultSidebar" dismissible="0" active="1" position="right_sidebar" display_order="0">
+    <widget title="Default Sidebar" description="Default XenForo Sidebar" callback_class="CWS_ControllerWidget_Default" callback_method="actionDefaultSidebar" argument="" dismissible="0" active="1" position="right_sidebar" display_order="0">
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:0:{}]]></page_criteria>
     </widget>
-    <widget title="Forum Stats" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionBoardTotals" dismissible="0" active="1" position="left_sidebar" display_order="30">
+    <widget title="Forum Stats" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionBoardTotals" argument="" dismissible="0" active="1" position="left_sidebar" display_order="30">
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:0:{}]]></page_criteria>
     </widget>
-    <widget title="Online Staff" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionOnlineStaff" dismissible="0" active="1" position="left_sidebar" display_order="10">
+    <widget title="HTML Block" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionHtml" argument="&lt;div class=&quot;section&quot;&gt;&#10;&#9;&#9;&lt;div class=&quot;secondaryContent&quot;&gt;&#10;&#9;&#9;&#9;&#9;&lt;h3&gt;HTML Block&lt;/h3&gt;&#10;&#9;&#9;&#9;&#9;&lt;p&gt;This is HTML block.&lt;/p&gt;&#10;&#9;&#9;&#9;&#9;&lt;p&gt;You can put any static info here.&lt;/p&gt;&#10;&#9;&#9;&#9;&#9;&lt;p&gt;Argument of the widget is content.&lt;/p&gt;&#9;&#9;&#9;&#9;&#10;&#9;&#9;&lt;/div&gt;&#10;&lt;/div&gt;" dismissible="0" active="1" position="left_sidebar" display_order="35">
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:0:{}]]></page_criteria>
+    </widget>
+    <widget title="Online Staff" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionOnlineStaff" argument="" dismissible="0" active="1" position="left_sidebar" display_order="10">
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
     </widget>
-    <widget title="Online Users" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionOnlineUsers" dismissible="0" active="1" position="left_sidebar" display_order="20">
+    <widget title="Online Users" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionOnlineUsers" argument="" dismissible="0" active="1" position="left_sidebar" display_order="20">
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
     </widget>
-    <widget title="Share Page" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionSharePage" dismissible="0" active="1" position="left_sidebar" display_order="40">
+    <widget title="Share Page" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionSharePage" argument="" dismissible="0" active="1" position="left_sidebar" display_order="40">
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
+    </widget>
+    <widget title="Template Block" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionTemplate" argument="cws_widget_template" dismissible="0" active="1" position="left_sidebar" display_order="37">
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:0:{}]]></page_criteria>
     </widget>
   </widgets>
   <template_modifications>

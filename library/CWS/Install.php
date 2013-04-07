@@ -98,8 +98,16 @@ class CWS_Install
             UNIQUE KEY title (title)
             ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
         ");
+	}
 
+	protected function _installVersion2()
+	{
+		$db = $this->_getDb();
 
+		$db->query("
+           ALTER TABLE cws_widget
+           ADD argument MEDIUMTEXT NOT NULL AFTER callback_method
+        ");
 	}
 
 	public static function destroy()

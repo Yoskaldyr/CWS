@@ -64,7 +64,7 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 			{
 				$widgetController = $this->getControllerWidgetFromCache($widget['callback_class']);
 
-				$widgetControllerResponse = call_user_func_array(array($widgetController, $widget['callback_method']), array());
+				$widgetControllerResponse = call_user_func_array(array($widgetController, $widget['callback_method']), array($widget['argument']));
 
 				if ($widgetControllerResponse instanceof XenForo_ControllerResponse_View)
 				{
