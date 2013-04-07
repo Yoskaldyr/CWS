@@ -4,9 +4,8 @@ class CWS_ControllerWidget_Default extends CWS_ControllerWidget_Abstract
 {
 	public function actionDefaultSidebar()
 	{
-		return !empty($this->_params['sidebar']) ? $this->_params['sidebar'] : '';
+		return !empty(self::$params['sidebar']) ? self::$params['sidebar'] : '';
 	}
-
 
 	public function actionOnlineUsers()
 	{
@@ -15,14 +14,14 @@ class CWS_ControllerWidget_Default extends CWS_ControllerWidget_Abstract
 		/* @var $sessionModel XenForo_Model_Session */
 		$sessionModel = $this->getModelFromCache('XenForo_Model_Session');
 
-		$this->_params['onlineUsers'] = isset($this->_params['onlineUsers']) ? $this->_params['onlineUsers'] :
+		self::$params['onlineUsers'] = isset(self::$params['onlineUsers']) ? self::$params['onlineUsers'] :
 			$sessionModel->getSessionActivityQuickList(
 				$visitor->toArray(),
 				array('cutOff' => array('>', $sessionModel->getOnlineStatusTimeout())),
 				($visitor['user_id'] ? $visitor->toArray() : null)
 			);
 
-		return $this->responseView('CWS_ViewWidget_Default', 'cws_widget_online_users', $this->_params);
+		return $this->responseView('CWS_ViewWidget_Default', 'cws_widget_online_users', self::$params);
 	}
 
 	public function actionOnlineStaff()
@@ -32,31 +31,31 @@ class CWS_ControllerWidget_Default extends CWS_ControllerWidget_Abstract
 		/* @var $sessionModel XenForo_Model_Session */
 		$sessionModel = $this->getModelFromCache('XenForo_Model_Session');
 
-		$this->_params['onlineUsers'] = isset($this->_params['onlineUsers']) ? $this->_params['onlineUsers'] :
+		self::$params['onlineUsers'] = isset(self::$params['onlineUsers']) ? self::$params['onlineUsers'] :
 			$sessionModel->getSessionActivityQuickList(
 				$visitor->toArray(),
 				array('cutOff' => array('>', $sessionModel->getOnlineStatusTimeout())),
 				($visitor['user_id'] ? $visitor->toArray() : null)
 			);
 
-		return $this->responseView('CWS_ViewWidget_Default', 'cws_widget_online_staff', $this->_params);
+		return $this->responseView('CWS_ViewWidget_Default', 'cws_widget_online_staff', self::$params);
 	}
 
 	public function actionBoardTotals()
 	{
-		$this->_params['boardTotals'] = isset($this->_params['boardTotals']) ? $this->_params['boardTotals'] : null;
+		self::$params['boardTotals'] = isset(self::$params['boardTotals']) ? self::$params['boardTotals'] : null;
 
-		if ($this->_params['boardTotals'] === null)
+		if (self::$params['boardTotals'] === null)
 		{
-			$this->_params['boardTotals'] = $this->getModelFromCache('XenForo_Model_DataRegistry')->get('boardTotals');
+			self::$params['boardTotals'] = $this->getModelFromCache('XenForo_Model_DataRegistry')->get('boardTotals');
 
-			if (!$this->_params['boardTotals'])
+			if (!self::$params['boardTotals'])
 			{
-				$this->_params['boardTotals'] = $this->getModelFromCache('XenForo_Model_Counters')->rebuildBoardTotalsCounter();
+				self::$params['boardTotals'] = $this->getModelFromCache('XenForo_Model_Counters')->rebuildBoardTotalsCounter();
 			}
 		}
 
-		return $this->responseView('CWS_ViewWidget_Default', 'cws_widget_forum_stats', $this->_params);
+		return $this->responseView('CWS_ViewWidget_Default', 'cws_widget_forum_stats', self::$params);
 	}
 
 	public function actionSharePage()

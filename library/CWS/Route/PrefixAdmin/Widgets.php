@@ -15,7 +15,7 @@ class CWS_Route_PrefixAdmin_Widgets implements XenForo_Route_Interface
 	public function match($routePath, Zend_Controller_Request_Http $request, XenForo_Router $router)
 	{
 		$action = $router->resolveActionWithIntegerParam($routePath, $request, 'widget_id');
-		return $router->getRouteMatch('CWS_ControllerAdmin_Widget', $action, 'widgets');
+		return $router->getRouteMatch('CWS_ControllerAdmin_Widget', $action, 'cwsWidgets');
 	}
 
 	/**

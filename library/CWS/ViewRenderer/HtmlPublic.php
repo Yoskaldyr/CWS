@@ -7,8 +7,15 @@
  */
 class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 {
+	/**
+	 * @var array
+	 */
+	public static $widgets = array();
+
+	/**
+	 * @var array
+	 */
 	protected $_controllerWidgetCache = array();
-	protected $_params = array();
 
 	/**
 	 * Constructor
@@ -42,7 +49,8 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 			$dismissedWidgets = array();
 		}
 
-		$this->_params = XenForo_Application::mapMerge($template->getParams(), $containerData, CWS_Static::$controllerResponse->params);
+		CWS_ControllerWidget_Abstract::$containerParams = XenForo_Application::mapMerge($template->getParams(), $containerData);
+		CWS_ControllerWidget_Abstract::$params = XenForo_Application::mapMerge(CWS_ControllerWidget_Abstract::$innerParams, CWS_ControllerWidget_Abstract::$containerParams);
 
 		foreach ($allWidgets AS $widgetId => $widget)
 		{
@@ -71,11 +79,10 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 				{
 					$widgets[$widgetPosition][$widgetId] = $widgetControllerResponse;
 				}
-
 			}
 		}
 
-		CWS_Static::$widgets = $widgets;
+		self::$widgets = $widgets;
 
 		return parent::_getNoticesContainerParams($template, $containerData);
 	}
@@ -92,7 +99,7 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 	{
 		if (!isset($this->_controllerWidgetCache[$class]))
 		{
-			$this->_controllerWidgetCache[$class] = new $class(CWS_Static::$controller, $this->_params);
+			$this->_controllerWidgetCache[$class] = new $class($this->_request, $this->_response, CWS_ControllerWidget_Abstract::$routeMatch);
 		}
 
 		return $this->_controllerWidgetCache[$class];
