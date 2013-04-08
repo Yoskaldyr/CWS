@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="CWS" title="Custom Widget System" version_string="Alpha 3" version_id="2" url="" install_callback_class="CWS_Install" install_callback_method="build" uninstall_callback_class="CWS_Install" uninstall_callback_method="destroy">
+<addon addon_id="CWS" title="Custom Widget System" version_string="Alpha 3" version_id="3" url="" install_callback_class="CWS_Install" install_callback_method="build" uninstall_callback_class="CWS_Install" uninstall_callback_method="destroy">
   <admin_navigation>
     <navigation navigation_id="cwsWidgetList" parent_navigation_id="cwsWidgets" display_order="1" link="widgets" admin_permission_id="option" debug_only="0" hide_no_children="0"/>
     <navigation navigation_id="cwsWidgets" parent_navigation_id="setup" display_order="26" link="widgets" admin_permission_id="option" debug_only="0" hide_no_children="1"/>
@@ -7,6 +7,99 @@
   <admin_permissions/>
   <admin_style_properties/>
   <admin_templates>
+    <template title="cws_options_template"><![CDATA[<xen:textboxunit label="{xen:phrase cws_template_title}:" name="options[template_title]" value="{$widget.options.template_title}" />]]></template>
+    <template title="cws_widget_edit"><![CDATA[<xen:title>{xen:if '{$widget.widget_id}', '{xen:phrase cws_edit_widget}: {$widget.title}', '{xen:phrase cws_create_new_widget}'}</xen:title>
+
+<xen:if is="{$widget.widget_id}">
+	<xen:navigation>
+		<xen:breadcrumb href="{xen:adminlink widgets}#{xen:helper listitemid, $widget.widget_id}">{$widget.title}</xen:breadcrumb>
+	</xen:navigation>
+</xen:if>
+
+<xen:require js="js/cws/cws.js" />
+<xen:require js="js/xenforo/event_listener.js" />
+<xen:require css="code_event.css" />
+
+<xen:form id="WidgetForm" class="AutoValidator" data-widgetId="{$widget.widget_id}"
+	action="{xen:adminlink 'widgets/save'}"
+	data-redirect="on">
+
+	<ul class="tabs Tabs" data-panes="#widgetPanes > li">
+		<li class="active"><a>{xen:phrase cws_widget_options}</a></li>
+		<li><a title="{xen:phrase cws_display_widget_if_user}" class="Tooltip">{xen:phrase user_criteria}</a></li>
+		<li><a title="{xen:phrase cws_display_widget_if_date}" class="Tooltip">{xen:phrase date_criteria}</a></li>
+		<li><a title="{xen:phrase cws_display_widget_if_page}" class="Tooltip">{xen:phrase page_criteria}</a></li>
+		<li><a title="{xen:phrase cws_display_widget_if_user}" class="Tooltip">{xen:phrase custom_userfield_criteria}</a></li>
+	</ul>
+	
+	<ul id="widgetPanes">
+		<li>
+			<xen:textboxunit label="{xen:phrase cws_widget_id}:" name="widget_id" value="{$widget.widget_id}" data-liveTitleTemplate="{xen:if {$widget.widget_id},
+				'{xen:phrase cws_edit_widget}: <em>%s</em>',
+				'{xen:phrase cws_create_new_widget}: <em>%s</em>'}">
+			</xen:textboxunit>
+
+			<xen:selectunit label="{xen:phrase position}:" name="position" value="{xen:if $widget.position, $widget.position, 'right_sidebar'}">
+				<xen:options source="$positionOptions" />
+			</xen:selectunit>
+				
+			<xen:controlunit label="{xen:phrase execute_callback}:">
+				<xen:textbox id="WidgetClass" placeholder="{xen:phrase class}" name="callback_class" value="{$widget.callback_class}" size="25" type="search" 
+					data-optionsUrl="{xen:adminlink widgets/options}" data-optionsTarget="#WidgetOptions"
+					results="5" inputclass="AutoComplete AcSingle WidgetOptions" 
+					data-acurl="{xen:adminlink 'widgets/search-class'}"/>
+				::
+				<xen:textbox placeholder="{xen:phrase method}" name="callback_method" value="{$widget.callback_method}" size="25" />
+			</xen:controlunit>
+                        
+                        <div id="WidgetOptions">{xen:raw $_subView}</div>
+
+			<fieldset>				
+				<xen:checkboxunit label="{xen:phrase options}:">
+					<xen:option name="dismissible" selected="{$widget.dismissible}" label="{xen:phrase cws_widget_may_be_dismissed}"
+						hint="{xen:phrase cws_users_may_hide_this_widget_when_they_have_read_it}" />
+					<xen:option name="active" selected="{$widget.active}" label="{xen:phrase cws_widget_is_active}"
+						hint="{xen:phrase cws_use_this_to_temporarily_disable_this_widget}" />
+				</xen:checkboxunit>
+				
+				<xen:spinboxunit label="{xen:phrase display_order}:" name="display_order" value="{$widget.display_order}" min="0" step="10" />				
+			</fieldset>
+
+			<xen:textboxunit label="{xen:phrase description}:" name="description" value="{$widget.description}" />
+
+			<xen:include template="helper_addon_unit" />
+
+			<input type="hidden" name="original_widget_id" value="{$widget.widget_id}" />
+		</li>		
+		<li><xen:include template="helper_criteria_user" /></li>
+		<li><xen:include template="helper_criteria_user_date" /></li>
+		<li><xen:include template="helper_criteria_page" /></li>
+		<li><xen:include template="helper_criteria_user_field" /></li>
+	</ul>
+	
+	<xen:submitunit save="{xen:phrase cws_save_widget}">
+		<xen:if is="{$widget.widget_id}"><a href="{xen:adminlink 'widgets/delete', $widget}" class="button OverlayTrigger">{xen:phrase cws_delete_widget}...</a></xen:if>
+	</xen:submitunit>
+	
+	<xen:controlunit label="{xen:phrase note}:">{xen:phrase cws_widget_shows_with_no_criteria}</xen:controlunit>
+</xen:form>]]></template>
+    <template title="cws_widget_delete"><![CDATA[<xen:title>{xen:phrase cws_confirm_deletion_of_widget}: {$widget.title}</xen:title>
+<xen:h1>{xen:phrase cws_confirm_deletion_of_widget}</xen:h1>
+
+<xen:navigation>
+	<xen:breadcrumb href="{xen:adminlink 'widgets/edit', $widget}">{$widget.widget_id}</xen:breadcrumb>
+</xen:navigation>
+
+<xen:require css="delete_confirmation.css" />
+
+<xen:form action="{xen:adminlink 'widgets/delete', $widget}" class="deleteConfirmForm">
+	<p>{xen:phrase cws_please_confirm_that_you_want_to_delete_following_widget}:</p>
+	<strong><a href="{xen:adminlink 'widgets/edit', $widget}">{$widget.widget_id}</a></strong>
+
+	<xen:submitunit save="{xen:phrase cws_delete_widget}" />
+
+	<input type="hidden" name="_xfConfirm" value="1" />
+</xen:form>]]></template>
     <template title="cws_widget_list"><![CDATA[<xen:title>{xen:phrase cws_widgets}</xen:title>
 
 <xen:topctrl><a href="{xen:adminlink widgets/add}" class="button">+ {xen:phrase cws_create_new_widget}</a></xen:topctrl>
@@ -25,13 +118,13 @@
 		<ol class="FilterList Scrollable">
 			<xen:foreach loop="$widgets" value="$widget">
 				<xen:listitem id="{$widget.widget_id}"
-					label="{$widget.title}"
+					label="{$widget.widget_id}"
 					labelclass="{xen:if '!{$widget.addonActive}', ' parentDisabled'}"
 					snippet="{$widget.addonTitle}"
 					href="{xen:adminlink 'widgets/edit', $widget}"
 					delete="{xen:adminlink 'widgets/delete', $widget}"
 					toggle="{$widget.active}"
-					toggletitle="{xen:phrase enable_disable_x, 'title={$widget.title}'}">
+					toggletitle="{xen:phrase enable_disable_x, 'title={$widget.widget_id}'}">
 					<xen:comment><xen:beforelabel>
 						<input type="hidden" name="widgetExists[{$widget.widget_id}]" value="1" />
 						<label class="Tooltip" data-offsetX="-2" data-offsetY="-3" title="{xen:phrase cws_enable_disable_this_widget}">
@@ -48,89 +141,6 @@
 		<div class="noResults">{xen:phrase cws_no_widgets_have_been_created_yet}</div>
 	</xen:if>
 
-</xen:form>]]></template>
-    <template title="cws_widget_edit"><![CDATA[<xen:title>{xen:if '{$widget.widget_id}', '{xen:phrase cws_edit_widget}: {$widget.title}', '{xen:phrase cws_create_new_widget}'}</xen:title>
-
-<xen:if is="{$widget.widget_id}">
-	<xen:navigation>
-		<xen:breadcrumb href="{xen:adminlink widgets}#{xen:helper listitemid, $widget.widget_id}">{$widget.title}</xen:breadcrumb>
-	</xen:navigation>
-</xen:if>
-
-<xen:form class="AutoValidator"
-	action="{xen:adminlink 'widgets/save', $widget}"
-	data-redirect="on">
-
-	<ul class="tabs Tabs" data-panes="#widgetPanes > li">
-		<li class="active"><a>{xen:phrase cws_widget_options}</a></li>
-		<li><a title="{xen:phrase cws_display_widget_if_user}" class="Tooltip">{xen:phrase user_criteria}</a></li>
-		<li><a title="{xen:phrase cws_display_widget_if_date}" class="Tooltip">{xen:phrase date_criteria}</a></li>
-		<li><a title="{xen:phrase cws_display_widget_if_page}" class="Tooltip">{xen:phrase page_criteria}</a></li>
-		<li><a title="{xen:phrase cws_display_widget_if_user}" class="Tooltip">{xen:phrase custom_userfield_criteria}</a></li>
-	</ul>
-	
-	<ul id="widgetPanes">
-		<li>
-			<xen:textboxunit label="{xen:phrase title}:" name="title" value="{$widget.title}" data-liveTitleTemplate="{xen:if {$widget.widget_id},
-				'{xen:phrase cws_edit_widget}: <em>%s</em>',
-				'{xen:phrase cws_create_new_widget}: <em>%s</em>'}">
-			</xen:textboxunit>
-				
-			<xen:controlunit label="{xen:phrase execute_callback}:">
-				<xen:textbox placeholder="{xen:phrase class}" name="callback_class" value="{$widget.callback_class}" size="25" />
-				::
-				<xen:textbox placeholder="{xen:phrase method}" name="callback_method" value="{$widget.callback_method}" size="25" />
-			</xen:controlunit>
-
-			<xen:textboxunit label="{xen:phrase cws_argument}:" name="argument" value="{$widget.argument}" rows="1" inputclass="Elastic" />
-			
-			<xen:selectunit label="{xen:phrase position}:" name="position" value="{xen:if $widget.position, $widget.position, 'right_sidebar'}">
-				<xen:options source="$positionOptions" />
-			</xen:selectunit>
-
-			<fieldset>				
-				<xen:checkboxunit label="{xen:phrase options}:">
-					<xen:option name="dismissible" selected="{$widget.dismissible}" label="{xen:phrase cws_widget_may_be_dismissed}"
-						hint="{xen:phrase cws_users_may_hide_this_widget_when_they_have_read_it}" />
-					<xen:option name="active" selected="{$widget.active}" label="{xen:phrase cws_widget_is_active}"
-						hint="{xen:phrase cws_use_this_to_temporarily_disable_this_widget}" />
-				</xen:checkboxunit>
-				
-				<xen:spinboxunit label="{xen:phrase display_order}:" name="display_order" value="{$widget.display_order}" min="0" step="10" />				
-			</fieldset>
-
-			<xen:textboxunit label="{xen:phrase description}:" name="description" value="{$widget.description}" />
-
-			<xen:include template="helper_addon_unit" />
-		</li>		
-		<li><xen:include template="helper_criteria_user" /></li>
-		<li><xen:include template="helper_criteria_user_date" /></li>
-		<li><xen:include template="helper_criteria_page" /></li>
-		<li><xen:include template="helper_criteria_user_field" /></li>
-	</ul>
-	
-	<xen:submitunit save="{xen:phrase cws_save_widget}">
-		<xen:if is="{$widget.widget_id}"><a href="{xen:adminlink 'widgets/delete', $widget}" class="button OverlayTrigger">{xen:phrase cws_delete_widget}...</a></xen:if>
-	</xen:submitunit>
-	
-	<xen:controlunit label="{xen:phrase note}:">{xen:phrase cws_widget_shows_with_no_criteria}</xen:controlunit>
-</xen:form>]]></template>
-    <template title="cws_widget_delete"><![CDATA[<xen:title>{xen:phrase cws_confirm_deletion_of_widget}: {$widget.title}</xen:title>
-<xen:h1>{xen:phrase cws_confirm_deletion_of_widget}</xen:h1>
-
-<xen:navigation>
-	<xen:breadcrumb href="{xen:adminlink 'widgets/edit', $widget}">{$widget.title}</xen:breadcrumb>
-</xen:navigation>
-
-<xen:require css="delete_confirmation.css" />
-
-<xen:form action="{xen:adminlink 'widgets/delete', $widget}" class="deleteConfirmForm">
-	<p>{xen:phrase cws_please_confirm_that_you_want_to_delete_following_widget}:</p>
-	<strong><a href="{xen:adminlink 'widgets/edit', $widget}">{$widget.title}</a></strong>
-
-	<xen:submitunit save="{xen:phrase cws_delete_widget}" />
-
-	<input type="hidden" name="_xfConfirm" value="1" />
 </xen:form>]]></template>
   </admin_templates>
   <code_events/>
@@ -165,9 +175,12 @@
     <phrase title="cws_no_widgets_have_been_created_yet" version_id="1" version_string=""><![CDATA[No widget have been created yet.]]></phrase>
     <phrase title="cws_please_confirm_that_you_want_to_delete_following_widget" version_id="1" version_string=""><![CDATA[Please confirm that you want to delete the following widget]]></phrase>
     <phrase title="cws_please_enter_title_using_only_alphanumeric_dot_space" version_id="1" version_string=""><![CDATA[Please enter a title using only a-z, A-Z, 0-9, _ and . characters and spaces.]]></phrase>
+    <phrase title="cws_please_enter_widget_id_using_alphanumeric" version_id="2" version_string="Alpha 3"><![CDATA[Please enter a widget ID/URL portion using a-z, 0-9, _, and - characters only.]]></phrase>
+    <phrase title="cws_please_enter_valid_widget_id" version_id="2" version_string="Alpha 3"><![CDATA[Please enter a valid widget ID.]]></phrase>
     <phrase title="cws_requested_widget_not_found" version_id="1" version_string=""><![CDATA[The requested widget could not be found.]]></phrase>
     <phrase title="cws_right_sidebar" version_id="1" version_string=""><![CDATA[Right Sidebar]]></phrase>
     <phrase title="cws_save_widget" version_id="1" version_string=""><![CDATA[Save widget]]></phrase>
+    <phrase title="cws_template_title" version_id="3" version_string="Alpha 3"><![CDATA[Template Title]]></phrase>
     <phrase title="cws_users_may_hide_this_widget_when_they_have_read_it" version_id="1" version_string=""><![CDATA[Users may hide this widget when they have read it.]]></phrase>
     <phrase title="cws_use_this_to_temporarily_disable_this_widget" version_id="1" version_string=""><![CDATA[Use this to temporarily disable this widget.]]></phrase>
     <phrase title="cws_widget_is_active" version_id="1" version_string=""><![CDATA[Widget is active]]></phrase>
@@ -176,6 +189,8 @@
     <phrase title="cws_widget_shows_with_no_criteria" version_id="1" version_string=""><![CDATA[This widget will be displayed to all visitors if no criteria are specified.]]></phrase>
     <phrase title="cws_widget_titles_must_be_unique" version_id="1" version_string=""><![CDATA[Widget titles must be unique. The specified title is already in use.]]></phrase>
     <phrase title="cws_widgets" version_id="1" version_string=""><![CDATA[Widgets]]></phrase>
+    <phrase title="cws_widget_ids_must_be_unique" version_id="2" version_string="Alpha 3"><![CDATA[Widget IDs must be unique. The specified ID is already in use.]]></phrase>
+    <phrase title="cws_widget_id" version_id="2" version_string="Alpha 3"><![CDATA[Widget ID]]></phrase>
   </phrases>
   <route_prefixes>
     <route_type type="admin">
@@ -298,51 +313,60 @@
 	</div>
 </div>
 <!-- end block: sidebar_online_users -->]]></template>
-    <template title="cws_widget_template" version_id="2" version_string="Alpha 3"><![CDATA[<div class="section">
+    <template title="cws_widget_template_block" version_id="3" version_string="Alpha 3"><![CDATA[<div class="section">
 		<div class="secondaryContent">
 				<h3>Template Block</h3>
 				<p>This is Template block.</p>
 				<p>You can set any template info here.</p>
 				<p>Parameters are merge result of inner and container parameters.</p>
-				<p>Argument of the widget is template name.</p>		
+				<p>Option of the widget is template name.</p>		
 				<p>Test: majorSection = {$majorSection}.</p>		
 		</div>
 </div>]]></template>
+    <template title="cws_widget_default_sidebar" version_id="2" version_string="Alpha 3"><![CDATA[<xen:if is="!{$noVisitorPanel}"><xen:include template="sidebar_visitor_panel" /></xen:if>
+{xen:raw $sidebar}]]></template>
   </templates>
   <bb_code_media_sites/>
   <widgets>
-    <widget title="Default Sidebar" description="Default XenForo Sidebar" callback_class="CWS_ControllerWidget_Default" callback_method="actionDefaultSidebar" argument="" dismissible="0" active="1" position="right_sidebar" display_order="0">
+    <widget widget_id="default-sidebar" description="Default XenForo Sidebar" callback_class="CWS_ControllerHelper_Default" callback_method="actionDefaultSidebar" dismissible="0" active="1" position="right_sidebar" display_order="5">
+      <options><![CDATA[a:0:{}]]></options>
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:0:{}]]></page_criteria>
     </widget>
-    <widget title="Forum Stats" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionBoardTotals" argument="" dismissible="0" active="1" position="left_sidebar" display_order="30">
+    <widget widget_id="forum-stats" description="" callback_class="CWS_ControllerHelper_Default" callback_method="actionBoardTotals" dismissible="0" active="1" position="left_sidebar" display_order="30">
+      <options><![CDATA[a:0:{}]]></options>
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:0:{}]]></page_criteria>
     </widget>
-    <widget title="HTML Block" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionHtml" argument="&lt;div class=&quot;section&quot;&gt;&#10;&#9;&#9;&lt;div class=&quot;secondaryContent&quot;&gt;&#10;&#9;&#9;&#9;&#9;&lt;h3&gt;HTML Block&lt;/h3&gt;&#10;&#9;&#9;&#9;&#9;&lt;p&gt;This is HTML block.&lt;/p&gt;&#10;&#9;&#9;&#9;&#9;&lt;p&gt;You can put any static info here.&lt;/p&gt;&#10;&#9;&#9;&#9;&#9;&lt;p&gt;Argument of the widget is content.&lt;/p&gt;&#9;&#9;&#9;&#9;&#10;&#9;&#9;&lt;/div&gt;&#10;&lt;/div&gt;" dismissible="0" active="1" position="left_sidebar" display_order="35">
+    <widget widget_id="online-staff" description="" callback_class="CWS_ControllerHelper_Default" callback_method="actionOnlineStaff" dismissible="0" active="1" position="left_sidebar" display_order="10">
+      <options><![CDATA[a:0:{}]]></options>
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
+    </widget>
+    <widget widget_id="online-users" description="" callback_class="CWS_ControllerHelper_Default" callback_method="actionOnlineUsers" dismissible="0" active="1" position="left_sidebar" display_order="20">
+      <options><![CDATA[a:0:{}]]></options>
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
+    </widget>
+    <widget widget_id="share-page" description="" callback_class="CWS_ControllerHelper_Default" callback_method="actionSharePage" dismissible="0" active="1" position="left_sidebar" display_order="40">
+      <options><![CDATA[a:0:{}]]></options>
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
+    </widget>
+    <widget widget_id="template-block" description="" callback_class="CWS_ControllerHelper_Template" callback_method="actionTemplate" dismissible="0" active="1" position="left_sidebar" display_order="37">
+      <options><![CDATA[a:1:{s:14:"template_title";s:25:"cws_widget_template_block";}]]></options>
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:0:{}]]></page_criteria>
     </widget>
-    <widget title="Online Staff" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionOnlineStaff" argument="" dismissible="0" active="1" position="left_sidebar" display_order="10">
-      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
-      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
-    </widget>
-    <widget title="Online Users" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionOnlineUsers" argument="" dismissible="0" active="1" position="left_sidebar" display_order="20">
-      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
-      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
-    </widget>
-    <widget title="Share Page" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionSharePage" argument="" dismissible="0" active="1" position="left_sidebar" display_order="40">
-      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
-      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
-    </widget>
-    <widget title="Template Block" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionTemplate" argument="cws_widget_template" dismissible="0" active="1" position="left_sidebar" display_order="37">
+    <widget widget_id="visitor-panel" description="" callback_class="CWS_ControllerHelper_Template" callback_method="actionTemplate" dismissible="0" active="1" position="left_sidebar" display_order="1">
+      <options><![CDATA[a:1:{s:14:"template_title";s:21:"sidebar_visitor_panel";}]]></options>
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:0:{}]]></page_criteria>
     </widget>
   </widgets>
   <template_modifications>
-    <modification title="cws_page_container" template_title="PAGE_CONTAINER" execute_order="10" modification_type="preg_replace" callback_class="" callback_method="" description="" version_id="1" version_string="" active="1">
-      <search_value><![CDATA[#<!DOCTYPE html>(.*){xen:raw \$contents}(.*){xen:raw \$sidebar}#s]]></search_value>
+    <modification title="cws_page_container" template_title="PAGE_CONTAINER" execute_order="10" modification_type="preg_replace" callback_class="" callback_method="" description="" version_id="2" version_string="Alpha 3" active="1">
+      <search_value><![CDATA[#<!DOCTYPE html>(.*){xen:raw \$contents}(.*)<xen:if is="!{\$noVisitorPanel}">.*{xen:raw \$sidebar}#s]]></search_value>
       <replace_value><![CDATA[<!DOCTYPE html>
 
 <xen:require css="cws.css" />

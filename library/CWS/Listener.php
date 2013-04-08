@@ -22,7 +22,7 @@ class CWS_Listener
 	{
 		if ($controller instanceof XenForo_ControllerPublic_Abstract && $controllerResponse instanceof XenForo_ControllerResponse_View)
 		{
-			CWS_ControllerWidget_Abstract::$routeMatch = $controller->getRouteMatch();
+			CWS_ViewRenderer_HtmlPublic::$controller = $controller;
 		}
 	}
 
@@ -32,7 +32,7 @@ class CWS_Listener
 			$viewRenderer instanceof XenForo_ViewRenderer_HtmlPublic
 		)
 		{
-			CWS_ControllerWidget_Abstract::$innerParams = $controllerResponse->params;
+			CWS_ControllerHelper_Widget::$innerParams = $controllerResponse->params;
 			$containerParams['widgets'] = & CWS_ViewRenderer_HtmlPublic::$widgets;
 			$viewRenderer = new CWS_ViewRenderer_HtmlPublic($viewRenderer);
 		}

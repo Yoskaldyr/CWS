@@ -2,33 +2,49 @@
 
 class CWS_Model_Widget extends XenForo_Model
 {
-	/**
-	 * Fetch a single widget by its widget_id
-	 *
-	 * @param integer $widgetId
-	 *
-	 * @return array
-	 */
+
+
 	public function getWidgetById($widgetId)
 	{
 		return $this->_getDb()->fetchRow('
-			SELECT *
-			FROM cws_widget
-			WHERE widget_id = ?
-		', $widgetId);
+			SELECT widget.*,
+			addon.title AS addonTitle
+			FROM cws_widget AS widget
+   			LEFT JOIN xf_addon AS addon ON
+   				(addon.addon_id = widget.addon_id)
+            WHERE widget.widget_id = ?
+      		', array($widgetId));
 	}
+
+
+	public function getWidgetsByIds(array $widgetIds)
+	{
+		if (!$widgetIds)
+		{
+			return array();
+		}
+
+		return $this->fetchAllKeyed('
+			SELECT widget.*,
+			addon.title AS addonTitle
+			FROM cws_widget AS widget
+   			LEFT JOIN xf_addon AS addon ON
+   				(addon.addon_id = widget.addon_id)
+  			WHERE widget.widget_id IN (' . $this->_getDb()->quote($widgetIds) . ')
+  		', 'widget_id');
+	}
+
 
 	public function getDefaultWidget()
 	{
 		return array(
-			'widget_id' => 0,
-			'title' => '',
+			'widget_id' => '',
 			'description' => '',
 			'user_criteria' => '',
 			'userCriteriaList' => array(),
 			'page_criteria' => '',
 			'pageCriteriaList' => array(),
-			'argument' => '',
+			'options' => array(),
 			'active' => 1,
 			'dismissible' => 0,
 			'display_order' => 1,
@@ -55,6 +71,7 @@ class CWS_Model_Widget extends XenForo_Model
 
 	public function prepareWidget(array $widget)
 	{
+		$widget['options'] = XenForo_Helper_Criteria::unserializeCriteria($widget['options']);
 		return $widget;
 	}
 
@@ -67,11 +84,11 @@ class CWS_Model_Widget extends XenForo_Model
 			if ($widget['active'] && $widget['addonActive'])
 			{
 				$cache[$widgetId] = array(
-					'title' => $widget['title'],
+					'widget_id' => $widget['widget_id'],
 					'description' => $widget['description'],
 					'callback_class' => $widget['callback_class'],
 					'callback_method' => $widget['callback_method'],
-					'argument' => $widget['argument'],
+					'options' => XenForo_Helper_Criteria::unserializeCriteria($widget['options']),
 					'dismissible' => $widget['dismissible'],
 					'position' => $widget['position'],
 					'user_criteria' => XenForo_Helper_Criteria::unserializeCriteria($widget['user_criteria']),
@@ -159,62 +176,12 @@ class CWS_Model_Widget extends XenForo_Model
 
 		return $this->fetchAllKeyed('
 			SELECT * FROM cws_widget
-			WHERE title LIKE ' . $quotedString . '
-			ORDER BY title, display_order
+			WHERE widget_id LIKE ' . $quotedString . '
+			ORDER BY widget_id, display_order
 		', 'widget_id');
 	}
 
 	/*******************************************************************************/
-
-
-	/**
-	 * Fetches a widget from a particular style based on its title.
-	 * Note that if a version of the requested widget does not exist
-	 * in the specified style, nothing will be returned.
-	 *
-	 * @param string Title
-	 * @param integer Style ID (defaults to master style)
-	 *
-	 * @return array
-	 */
-	public function getWidgetByTitle($title)
-	{
-		return $this->_getDb()->fetchRow('
-			SELECT widget.*,
-			addon.title AS addonTitle
-			FROM cws_widget AS widget
-   			LEFT JOIN xf_addon AS addon ON
-   				(addon.addon_id = widget.addon_id)
-            WHERE widget.title = ?
-      		', array($title));
-	}
-
-	/**
-	 * Fetches widgets from a particular style based on their titles.
-	 * Note that if a version of the requested widget does not exist
-	 * in the specified style, nothing will be returned for it.
-	 *
-	 * @param array $titles List of titles
-	 * @param integer $styleId Style ID (defaults to master style)
-	 *
-	 * @return array Format: [title] => info
-	 */
-	public function getWidgetsByTitles(array $titles)
-	{
-		if (!$titles)
-		{
-			return array();
-		}
-
-		return $this->fetchAllKeyed('
-			SELECT widget.*,
-			addon.title AS addonTitle
-			FROM cws_widget AS widget
-   			LEFT JOIN xf_addon AS addon ON
-   				(addon.addon_id = widget.addon_id)
-  			WHERE widget.title IN (' . $this->_getDb()->quote($titles) . ')
-  		', 'widget_id');
-	}
 
 
 	/**
@@ -230,7 +197,7 @@ class CWS_Model_Widget extends XenForo_Model
 			SELECT widget.*
 			FROM cws_widget AS widget
 			WHERE addon_id = ?
-			ORDER BY title, display_order
+			ORDER BY widget_id, display_order
 		', 'widget_id', $addOnId);
 	}
 
@@ -267,30 +234,29 @@ class CWS_Model_Widget extends XenForo_Model
 
 		$widgets = XenForo_Helper_DevelopmentXml::fixPhpBug50670($xml->widget);
 
-		$titles = array();
+		$widgetIds = array();
 		foreach ($widgets AS $widget)
 		{
-			$titles[] = (string)$widget['title'];
+			$widgetIds[] = (string)$widget['widget_id'];
 		}
 
-		$existingWidgets = $this->getWidgetsByTitles($titles);
+		$existingWidgets = $this->getWidgetsByIds($widgetIds);
 
 		foreach ($widgets AS $widget)
 		{
-			$widgetName = (string)$widget['title'];
+			$widgetId = (string)$widget['widget_id'];
 
 			$dw = XenForo_DataWriter::create('CWS_DataWriter_Widget');
-			if (isset($existingWidgets[$widgetName]))
+			if (isset($existingWidgets[$widgetId]))
 			{
-				$dw->setExistingData($existingWidgets[$widgetName], true);
+				$dw->setExistingData($existingWidgets[$widgetId], true);
 			}
-			$dw->setOption(CWS_DataWriter_Widget::OPTION_CHECK_DUPLICATE, false);
 			$dw->bulkSet(array(
-				'title' => $widgetName,
+				'widget_id' => $widgetId,
 				'description' => (string)$widget['description'],
 				'callback_class' => (string)$widget['callback_class'],
 				'callback_method' => (string)$widget['callback_method'],
-				'argument' => (string)$widget['argument'],
+				'options' => unserialize(XenForo_Helper_DevelopmentXml::processSimpleXmlCdata($widget->options)),
 				'dismissible' => (int)$widget['dismissible'],
 				'active' => (int)$widget['active'],
 				'position' => (string)$widget['position'],
@@ -300,7 +266,6 @@ class CWS_Model_Widget extends XenForo_Model
 				'addon_id' => $addOnId,
 			));
 			$dw->save();
-
 		}
 
 		XenForo_Db::commit($db);
@@ -322,17 +287,18 @@ class CWS_Model_Widget extends XenForo_Model
 		foreach ($widgets AS $widget)
 		{
 			$widgetNode = $document->createElement('widget');
-			$widgetNode->setAttribute('title', $widget['title']);
+			$widgetNode->setAttribute('widget_id', $widget['widget_id']);
 			$widgetNode->setAttribute('description', $widget['description']);
 			$widgetNode->setAttribute('callback_class', $widget['callback_class']);
 			$widgetNode->setAttribute('callback_method', $widget['callback_method']);
-			$widgetNode->setAttribute('argument', $widget['argument']);
 			$widgetNode->setAttribute('dismissible', $widget['dismissible']);
 			$widgetNode->setAttribute('active', $widget['active']);
 			$widgetNode->setAttribute('position', $widget['position']);
 			$widgetNode->setAttribute('display_order', $widget['display_order']);
-			//$widgetNode->setAttribute('user_criteria', $widget['user_criteria']);
-			//$widgetNode->setAttribute('page_criteria', $widget['page_criteria']);
+
+			$findNode = $document->createElement('options');
+			$findNode->appendChild(XenForo_Helper_DevelopmentXml::createDomCdataSection($document, $widget['options']));
+			$widgetNode->appendChild($findNode);
 
 			$findNode = $document->createElement('user_criteria');
 			$findNode->appendChild(XenForo_Helper_DevelopmentXml::createDomCdataSection($document, $widget['user_criteria']));

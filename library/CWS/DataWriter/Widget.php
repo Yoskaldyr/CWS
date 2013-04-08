@@ -7,12 +7,11 @@
  */
 class CWS_DataWriter_Widget extends XenForo_DataWriter
 {
-	const OPTION_CHECK_DUPLICATE = 'checkDuplicate';
 
 	/**
 	 * @var string
 	 */
-	protected $_existingDataErrorPhrase = 'requested_widget_not_found';
+	protected $_existingDataErrorPhrase = 'cws_requested_widget_not_found';
 
 	/**
 	 * Gets the fields that are defined for the table. See parent for explanation.
@@ -23,15 +22,15 @@ class CWS_DataWriter_Widget extends XenForo_DataWriter
 	{
 		return array(
 			'cws_widget' => array(
-				'widget_id' => array('type' => self::TYPE_UINT, 'autoIncrement' => true),
-				'title' => array('type' => self::TYPE_STRING, 'required' => true, 'maxLength' => 150,
-					'requiredError' => 'please_enter_valid_title'),
+				'widget_id' => array('type' => self::TYPE_STRING, 'maxLength' => 50, 'required' => true,
+					'verification' => array('$this', '_verifyWidgetId'), 'requiredError' => 'cws_please_enter_valid_widget_id'
+				),
 				'description' => array('type' => self::TYPE_STRING, 'default' => ''),
 				'callback_class' => array('type' => self::TYPE_STRING, 'maxLength' => 75, 'required' => true,
 					'requiredError' => 'please_enter_valid_callback_class'),
 				'callback_method' => array('type' => self::TYPE_STRING, 'maxLength' => 50, 'required' => true,
 					'requiredError' => 'please_enter_valid_callback_method'),
-				'argument' => array('type' => self::TYPE_STRING, 'default' => ''),
+				'options' => array('type' => self::TYPE_SERIALIZED, 'default' => 'a:0:{}'),
 				'dismissible' => array('type' => self::TYPE_BOOLEAN, 'default' => 1),
 				'active' => array('type' => self::TYPE_BOOLEAN, 'default' => 1),
 				'position' => array('type' => self::TYPE_STRING, 'default' => 'right_sidebar'),
@@ -54,7 +53,7 @@ class CWS_DataWriter_Widget extends XenForo_DataWriter
 	 */
 	protected function _getExistingData($data)
 	{
-		if (!$id = $this->_getExistingPrimaryKey($data))
+		if (!$id = $this->_getExistingPrimaryKey($data, 'widget_id'))
 		{
 			return false;
 		}
@@ -72,20 +71,22 @@ class CWS_DataWriter_Widget extends XenForo_DataWriter
 		return 'widget_id = ' . $this->_db->quote($this->getExisting('widget_id'));
 	}
 
-	protected function _getDefaultOptions()
+	protected function _verifyWidgetId(&$widgetId)
 	{
-		$options = array(self::OPTION_CHECK_DUPLICATE => true);
-
-		return $options;
-	}
-
-	protected function _verifyPrepareTitle(&$title)
-	{
-		$title = trim($title);
-		if (preg_match('/[^a-zA-Z0-9_ \.]/', $title))
+		if (!preg_match('/^[a-z0-9_\-]+$/i', $widgetId))
 		{
-			$this->error(new XenForo_Phrase('cws_please_enter_title_using_only_alphanumeric_dot_space'), 'title');
+			$this->error(new XenForo_Phrase('cws_please_enter_widget_id_using_alphanumeric'), 'widget_id');
 			return false;
+		}
+
+		if ($this->isInsert() || $widgetId != $this->getExisting('widget_id'))
+		{
+			$existing = $this->_getWidgetModel()->getWidgetById($widgetId);
+			if ($existing)
+			{
+				$this->error(new XenForo_Phrase('cws_widget_ids_must_be_unique'), 'widget_id');
+				return false;
+			}
 		}
 
 		return true;
@@ -116,16 +117,6 @@ class CWS_DataWriter_Widget extends XenForo_DataWriter
 			if (!XenForo_Application::autoload($class) || !method_exists($class, $method))
 			{
 				$this->error(new XenForo_Phrase('please_enter_valid_callback_method'), 'callback_method');
-			}
-		}
-
-		if ($this->getOption(self::OPTION_CHECK_DUPLICATE) && $this->isChanged('title'))
-		{
-			$titleConflict = $this->_getWidgetModel()->getWidgetByTitle($this->getNew('title'));
-
-			if ($titleConflict)
-			{
-				$this->error(new XenForo_Phrase('cws_widget_titles_must_be_unique'), 'title');
 			}
 		}
 	}

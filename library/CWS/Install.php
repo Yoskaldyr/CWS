@@ -76,37 +76,27 @@ class CWS_Install
 		XenForo_Db::commit($db);
 	}
 
-	protected function _installVersion1()
+	protected function _installVersion3()
 	{
 		$db = $this->_getDb();
 
+		$db->query("DROP TABLE IF EXISTS cws_widget");
+
 		$db->query("
             CREATE TABLE cws_widget (
-            widget_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT ,
-            title VARCHAR(25) NOT NULL ,
-            description text NOT NULL ,
+            widget_id VARCHAR(50) NOT NULL PRIMARY KEY,
+            description TEXT NOT NULL ,
             callback_class VARCHAR(75) NOT NULL DEFAULT '',
             callback_method VARCHAR(50) NOT NULL DEFAULT '',
+            options MEDIUMBLOB NOT NULL,
             active TINYINT UNSIGNED NOT NULL DEFAULT '1',
             display_order INT(10) UNSIGNED NOT NULL DEFAULT '1',
             dismissible TINYINT UNSIGNED NOT NULL default '0',
             position VARCHAR(50) NOT NULL DEFAULT '',
             user_criteria MEDIUMBLOB NOT NULL,
             page_criteria MEDIUMBLOB NOT NULL,
-            addon_id VARCHAR(25) NOT NULL DEFAULT '',
-            PRIMARY KEY (widget_id) ,
-            UNIQUE KEY title (title)
+            addon_id VARCHAR(25) NOT NULL DEFAULT ''
             ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
-        ");
-	}
-
-	protected function _installVersion2()
-	{
-		$db = $this->_getDb();
-
-		$db->query("
-           ALTER TABLE cws_widget
-           ADD argument MEDIUMTEXT NOT NULL AFTER callback_method
         ");
 	}
 

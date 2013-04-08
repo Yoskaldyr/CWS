@@ -13,9 +13,9 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 	public static $widgets = array();
 
 	/**
-	 * @var array
+	 * @var XenForo_Controller
 	 */
-	protected $_controllerWidgetCache = array();
+	public static $controller;
 
 	/**
 	 * Constructor
@@ -49,8 +49,8 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 			$dismissedWidgets = array();
 		}
 
-		CWS_ControllerWidget_Abstract::$containerParams = XenForo_Application::mapMerge($template->getParams(), $containerData);
-		CWS_ControllerWidget_Abstract::$params = XenForo_Application::mapMerge(CWS_ControllerWidget_Abstract::$innerParams, CWS_ControllerWidget_Abstract::$containerParams);
+		CWS_ControllerHelper_Widget::$containerParams = XenForo_Application::mapMerge($template->getParams(), $containerData);
+		CWS_ControllerHelper_Widget::$params = XenForo_Application::mapMerge(CWS_ControllerHelper_Widget::$innerParams, CWS_ControllerHelper_Widget::$containerParams);
 
 		foreach ($allWidgets AS $widgetId => $widget)
 		{
@@ -62,22 +62,22 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 				XenForo_Helper_Criteria::pageMatchesCriteria($widget['page_criteria'], true, $template->getParams(), $containerData)
 			)
 			{
-				$widgetController = $this->getControllerWidgetFromCache($widget['callback_class']);
+				$widgetHelper = new $widget['callback_class'](self::$controller, $widget['options']);
 
-				$widgetControllerResponse = call_user_func_array(array($widgetController, $widget['callback_method']), array($widget['argument']));
+				$widgetResponse = call_user_func_array(array($widgetHelper, $widget['callback_method']), array($widget['options']));
 
-				if ($widgetControllerResponse instanceof XenForo_ControllerResponse_View)
+				if ($widgetResponse instanceof XenForo_ControllerResponse_View)
 				{
 					$widgets[$widgetPosition][$widgetId] = $this->renderView(
-						$widgetControllerResponse->viewName,
-						$widgetControllerResponse->params,
-						$widgetControllerResponse->templateName,
-						$widgetControllerResponse->subView
+						$widgetResponse->viewName,
+						$widgetResponse->params,
+						$widgetResponse->templateName,
+						$widgetResponse->subView
 					);
 				}
-				elseif ($widgetControllerResponse)
+				elseif ($widgetResponse)
 				{
-					$widgets[$widgetPosition][$widgetId] = $widgetControllerResponse;
+					$widgets[$widgetPosition][$widgetId] = $widgetResponse;
 				}
 			}
 		}
@@ -85,23 +85,5 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 		self::$widgets = $widgets;
 
 		return parent::_getNoticesContainerParams($template, $containerData);
-	}
-
-	/**
-	 * Gets the specified model object from the cache. If it does not exist,
-	 * it will be instantiated.
-	 *
-	 * @param string $class Name of the class to load
-	 *
-	 * @return CWS_ControllerWidget_Abstract
-	 */
-	public function getControllerWidgetFromCache($class)
-	{
-		if (!isset($this->_controllerWidgetCache[$class]))
-		{
-			$this->_controllerWidgetCache[$class] = new $class($this->_request, $this->_response, CWS_ControllerWidget_Abstract::$routeMatch);
-		}
-
-		return $this->_controllerWidgetCache[$class];
 	}
 }

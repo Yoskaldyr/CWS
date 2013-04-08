@@ -19,7 +19,10 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 		$widgetModel = $this->_getWidgetModel();
 		$addOnModel = $this->_getAddOnModel();
 
-		$positionOptions = array('left_sidebar' => new XenForo_Phrase('cws_left_sidebar'), 'right_sidebar' => new XenForo_Phrase('cws_right_sidebar'));
+		$positionOptions = array(
+			'left_sidebar' => new XenForo_Phrase('cws_left_sidebar'),
+			'right_sidebar' => new XenForo_Phrase('cws_right_sidebar')
+		);
 
 		if (empty($positionOptions[$widget['position']]))
 		{
@@ -38,7 +41,16 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 			'addOnSelected' => (isset($widget['addon_id']) ? $widget['addon_id'] : $addOnModel->getDefaultAddOnId())
 		);
 
-		return $this->responseView('XenForo_ViewAdmin_Widget_Edit', 'cws_widget_edit', $viewParams);
+		$response = $this->responseView('XenForo_ViewAdmin_Widget_Edit', 'cws_widget_edit', $viewParams);
+
+		$callbackClass = isset($widget['callback_class']) ? $widget['callback_class'] : 'CWS_ControllerHelper_Widget';
+
+		/* @var $widgetHelper CWS_ControllerHelper_Widget */
+		$widgetHelper = $this->getHelper($callbackClass);
+
+		$response->subView = $widgetHelper->getOptionsForEdit($widget);
+
+		return $response;
 	}
 
 	public function actionAdd()
@@ -48,7 +60,7 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 
 	public function actionEdit()
 	{
-		$widgetId = $this->_input->filterSingle('widget_id', XenForo_Input::UINT);
+		$widgetId = $this->_input->filterSingle('widget_id', XenForo_Input::STRING);
 		$widget = $this->_getWidgetOrError($widgetId);
 
 		return $this->_getWidgetAddEditResponse($widget);
@@ -58,14 +70,14 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 	{
 		$this->_assertPostOnly();
 
-		$widgetId = $this->_input->filterSingle('widget_id', XenForo_Input::UINT);
+		$originalWidgetId = $this->_input->filterSingle('original_widget_id', XenForo_Input::STRING);
 
 		$data = $this->_input->filter(array(
-			'title' => XenForo_Input::STRING,
+			'widget_id' => XenForo_Input::STRING,
 			'description' => XenForo_Input::STRING,
 			'callback_class' => XenForo_Input::STRING,
 			'callback_method' => XenForo_Input::STRING,
-			'argument' => XenForo_Input::STRING,
+			'options' => XenForo_Input::ARRAY_SIMPLE,
 			'dismissible' => XenForo_Input::UINT,
 			'active' => XenForo_Input::UINT,
 			'position' => XenForo_Input::STRING,
@@ -75,10 +87,18 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 			'addon_id' => XenForo_Input::STRING,)
 		);
 
-		$dw = XenForo_DataWriter::create('CWS_DataWriter_Widget');
-		if ($widgetId)
+		if (is_callable(array($data['callback_class'], 'filterOptionsForSave')))
 		{
-			$dw->setExistingData($widgetId);
+			/* @var $widgetHelper CWS_ControllerHelper_Widget */
+			$widgetHelper = $this->getHelper($data['callback_class']);
+
+			$data['options'] = $widgetHelper->filterOptionsForSave();
+		}
+
+		$dw = XenForo_DataWriter::create('CWS_DataWriter_Widget');
+		if ($originalWidgetId)
+		{
+			$dw->setExistingData($originalWidgetId);
 		}
 		$dw->bulkSet($data);
 		$dw->save();
@@ -90,12 +110,13 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 
 	public function actionDelete()
 	{
-		$widgetId = $this->_input->filterSingle('widget_id', XenForo_Input::UINT);
+		$widgetId = $this->_input->filterSingle('widget_id', XenForo_Input::STRING);
 
 		if ($this->isConfirmedPost())
 		{
 			return $this->_deleteData('CWS_DataWriter_Widget', 'widget_id', XenForo_Link::buildAdminLink('widgets'));
-		} else
+		}
+		else
 		{
 			$viewParams = array('widget' => $this->_getWidgetOrError($widgetId));
 
@@ -132,6 +153,76 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 
 		return $widgetModel->prepareWidget($widget);
 	}
+
+
+	public function actionOptions()
+	{
+		$widgetModel = $this->_getWidgetModel();
+
+		$className = $this->_input->filterSingle('callback_class', XenForo_Input::STRING);
+		$widgetId = $this->_input->filterSingle('widget_id', XenForo_Input::STRING);
+
+		$widget = $this->_getWidgetModel()->getWidgetById($widgetId);
+
+		if($widget)
+		{
+			$widget = $widgetModel->prepareWidget($widget);
+		}
+
+		$className = is_callable(array($className, 'getOptionsForEdit')) ? $className : 'CWS_ControllerHelper_Widget';
+
+		/* @var $widgetHelper CWS_ControllerHelper_Widget */
+		$widgetHelper = $this->getHelper($className);
+
+		return $widgetHelper->getOptionsForEdit($widget);
+	}
+
+	public function actionSearchClass()
+	{
+		$q = $this->_input->filterSingle('q', XenForo_Input::STRING);
+
+		$classes = array();
+
+		if ($q !== '')
+		{
+			$libraryDir = XenForo_Application::getInstance()->getRootDir() . '/library';
+
+			$filePaths = array();
+			$this->_scanDir($libraryDir, $filePaths);
+
+			foreach($filePaths as $filePath)
+			{
+				$class = str_replace($libraryDir.'/', '', $filePath);
+				$class = str_replace('/', '_', $class);
+				$class = str_replace('.php', '', $class);
+
+				if(strpos($class, $q) === 0 && strpos($class, 'ControllerHelper') && XenForo_Application::autoload($class))
+				{
+					$classes[] = $class;
+				}
+			}
+		}
+
+		$viewParams = array(
+			'values' => $classes
+		);
+
+		return $this->responseView('CWS_ViewAdmin_Widget_SearchParam', '', $viewParams);
+	}
+
+	protected function _scanDir($dir, array &$filePaths)
+	{
+		foreach (scandir($dir) as $filename) {
+			if (is_dir($dir . '/' . $filename) && $filename != '.' && $filename != '..') {
+				$this->_scanDir($dir . '/' . $filename, $filePaths);
+			}
+			elseif (is_file($dir . '/' . $filename)) {
+				$filePaths[] = $dir . '/' . $filename;
+			}
+		}
+	}
+
+
 
 	/**
 	 * @return CWS_Model_Widget
