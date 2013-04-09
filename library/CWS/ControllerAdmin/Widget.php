@@ -43,12 +43,11 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 
 		$response = $this->responseView('XenForo_ViewAdmin_Widget_Edit', 'cws_widget_edit', $viewParams);
 
-		$callbackClass = isset($widget['callback_class']) ? $widget['callback_class'] : 'CWS_ControllerHelper_Widget';
+		$callbackClass = isset($widget['callback_class']) ? $widget['callback_class'] : 'CWS_WidgetHandler_Abstract';
 
-		/* @var $widgetHelper CWS_ControllerHelper_Widget */
-		$widgetHelper = $this->getHelper($callbackClass);
+		$widgetHandler = $this->_getWidgetHandler($callbackClass);
 
-		$response->subView = $widgetHelper->getOptionsForEdit($widget);
+		$response->subView = $widgetHandler->renderOptions($this, $widget);
 
 		return $response;
 	}
@@ -86,14 +85,6 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 			'page_criteria' => XenForo_Input::ARRAY_SIMPLE,
 			'addon_id' => XenForo_Input::STRING,)
 		);
-
-		if (is_callable(array($data['callback_class'], 'filterOptionsForSave')))
-		{
-			/* @var $widgetHelper CWS_ControllerHelper_Widget */
-			$widgetHelper = $this->getHelper($data['callback_class']);
-
-			$data['options'] = $widgetHelper->filterOptionsForSave();
-		}
 
 		$dw = XenForo_DataWriter::create('CWS_DataWriter_Widget');
 		if ($originalWidgetId)
@@ -143,53 +134,47 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 	 */
 	protected function _getWidgetOrError($widgetId)
 	{
-		$widgetModel = $this->_getWidgetModel();
+		$widget = $this->_getWidgetModel()->getWidgetById($widgetId);
 
-		$widget = $widgetModel->getWidgetById($widgetId);
 		if (!$widget)
 		{
 			throw $this->responseException($this->responseError(new XenForo_Phrase('cws_requested_widget_not_found'), 404));
 		}
 
-		return $widgetModel->prepareWidget($widget);
+		return $this->_getWidgetHandler($widget['callback_class'])->prepareWidget($widget);
 	}
 
 
 	public function actionOptions()
 	{
-		$widgetModel = $this->_getWidgetModel();
-
-		$classNameInput = $this->_input->filterSingle('callback_class', XenForo_Input::STRING);
+		$class = $this->_input->filterSingle('callback_class', XenForo_Input::STRING);
 		$widgetId = $this->_input->filterSingle('widget_id', XenForo_Input::STRING);
 
 		$widget = $this->_getWidgetModel()->getWidgetById($widgetId);
 
+		$widgetHandler = $this->_getWidgetHandler($class);
+
 		if($widget)
 		{
-			$widget = $widgetModel->prepareWidget($widget);
+			$widget = $widgetHandler->prepareWidget($widget);
 		}
 
-		$className = is_callable(array($classNameInput, 'getOptionsForEdit')) ? $classNameInput : 'CWS_ControllerHelper_Widget';
-
-		/* @var $widgetHelper CWS_ControllerHelper_Widget */
-		$widgetHelper = $this->getHelper($className);
-
-		return $widgetHelper->getOptionsForEdit($widget);
+		return $widgetHandler->renderOptions($this, $widget);
 	}
 
 	public function actionSearchMethod()
 	{
 		$q = $this->_input->filterSingle('q', XenForo_Input::STRING);
 
-		$classNameInput = $this->_input->filterSingle('class', XenForo_Input::STRING);
+		$class = $this->_input->filterSingle('class', XenForo_Input::STRING);
 
 		$methods = array();
 
-		if(strpos($classNameInput, 'ControllerHelper') && XenForo_Application::autoload($classNameInput))
+		if(strpos($class, 'WidgetHandler') && XenForo_Application::autoload($class))
 		{
-			foreach(get_class_methods($classNameInput) as $method)
+			foreach(get_class_methods($class) as $method)
 			{
-				if(strpos($method, $q) === 0 && !in_array($method, array('__construct', 'getOptionsForEdit', 'filterOptionsForSave')))
+				if(strpos($method, $q) === 0 && !in_array($method, array('__construct', 'renderOptions', 'prepareWidget')))
 				{
 					$methods[] = $method;
 				}
@@ -224,7 +209,7 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 				$class = str_replace('/', '_', $class);
 				$class = str_replace('.php', '', $class);
 
-				if(strpos($class, $q) === 0 && strpos($class, 'ControllerHelper') && XenForo_Application::autoload($class))
+				if(strpos($class, $q) === 0 && strpos($class, 'WidgetHandler') && XenForo_Application::autoload($class))
 				{
 					$classes[] = $class;
 				}
@@ -250,7 +235,20 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 		}
 	}
 
+	/**
+	 * @param string $class Full class name, or partial suffix (if no underscore)
+	 *
+	 * @return CWS_WidgetHandler_Abstract
+	 */
+	public function _getWidgetHandler($class)
+	{
+		$class = is_callable(array($class, 'renderOptions')) &&
+			is_callable(array($class, 'prepareWidget')) &&
+			is_callable(array($class, 'prepareOptions')) ?
+			$class : 'CWS_WidgetHandler_Abstract';
 
+		return new $class();
+	}
 
 	/**
 	 * @return CWS_Model_Widget

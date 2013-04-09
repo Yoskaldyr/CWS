@@ -109,14 +109,24 @@ class CWS_DataWriter_Widget extends XenForo_DataWriter
 
 	protected function _preSave()
 	{
-		if ($this->isChanged('callback_class') || $this->isChanged('callback_method'))
-		{
-			$class = $this->get('callback_class');
-			$method = $this->get('callback_method');
+		$class = $this->get('callback_class');
+		$method = $this->get('callback_method');
 
-			if (!XenForo_Application::autoload($class) || !method_exists($class, $method))
+		if (!XenForo_Application::autoload($class) || !method_exists($class, $method))
+		{
+			$this->error(new XenForo_Phrase('please_enter_valid_callback_method'), 'callback_method');
+		}
+		else
+		{
+			$widgetHandler = new $class();
+
+			if(!($widgetHandler instanceof CWS_WidgetHandler_Abstract))
 			{
-				$this->error(new XenForo_Phrase('please_enter_valid_callback_method'), 'callback_method');
+				$this->error(new XenForo_Phrase('cws_callback_class_must_extend_class_y', array('class' => 'CWS_WidgetHandler_Abstract')), 'callback_class');
+			}
+			else
+			{
+				$this->set('options', $widgetHandler->prepareOptions($this->get('options')));
 			}
 		}
 	}

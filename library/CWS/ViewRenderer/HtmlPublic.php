@@ -7,6 +7,12 @@
  */
 class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 {
+
+	/**
+	 * @var array
+	 */
+	protected $_widgetHandlerCache = array();
+
 	/**
 	 * @var array
 	 */
@@ -32,9 +38,7 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 
 	protected function _getNoticesContainerParams(XenForo_Template_Abstract $template, array $containerData)
 	{
-		/* @var $widgetModel CWS_Model_Widget */
-		$widgetModel = XenForo_Model::create('CWS_Model_Widget');
-		$allWidgets = $widgetModel->rebuildWidgetCache();
+		$allWidgets = XenForo_Application::isRegistered('widgets') ? XenForo_Application::get('widgets') : array();
 		$widgets = array();
 
 		$user = XenForo_Visitor::getInstance()->toArray();
@@ -49,8 +53,8 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 			$dismissedWidgets = array();
 		}
 
-		CWS_ControllerHelper_Widget::$containerParams = XenForo_Application::mapMerge($template->getParams(), $containerData);
-		CWS_ControllerHelper_Widget::$params = XenForo_Application::mapMerge(CWS_ControllerHelper_Widget::$innerParams, CWS_ControllerHelper_Widget::$containerParams);
+		CWS_WidgetHandler_Abstract::$containerParams = XenForo_Application::mapMerge($template->getParams(), $containerData);
+		CWS_WidgetHandler_Abstract::$params = XenForo_Application::mapMerge(CWS_WidgetHandler_Abstract::$innerParams, CWS_WidgetHandler_Abstract::$containerParams);
 
 		foreach ($allWidgets AS $widgetId => $widget)
 		{
@@ -62,9 +66,26 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 				XenForo_Helper_Criteria::pageMatchesCriteria($widget['page_criteria'], true, $template->getParams(), $containerData)
 			)
 			{
-				$widgetHelper = new $widget['callback_class'](self::$controller, $widget['options']);
+				$widgetHandler = $this->_getWidgetHandlerFromCache($widget['callback_class']);
 
-				$widgetResponse = call_user_func_array(array($widgetHelper, $widget['callback_method']), array($widget['options']));
+				if(!($widgetHandler instanceof CWS_WidgetHandler_Abstract))
+				{
+					throw new XenForo_Exception(
+						new XenForo_Phrase('cws_callback_class_of_widget_x_must_extend_class_y',
+							array(
+								'widget' => $widget['widget_id'],
+								'class' => 'CWS_WidgetHandler_Abstract'
+							)
+						));
+				}
+
+				$widgetResponse = call_user_func_array(
+					array($widgetHandler, $widget['callback_method']),
+					array(
+						self::$controller,
+						$widgetHandler->prepareOptions($widget['options'])
+					)
+				);
 
 				if ($widgetResponse instanceof XenForo_ControllerResponse_View)
 				{
@@ -85,5 +106,20 @@ class CWS_ViewRenderer_HtmlPublic extends XenForo_ViewRenderer_HtmlPublic
 		self::$widgets = $widgets;
 
 		return parent::_getNoticesContainerParams($template, $containerData);
+	}
+
+	/**
+	 * @param string $class Full class name, or partial suffix (if no underscore)
+	 *
+	 * @return CWS_WidgetHandler_Abstract
+	 */
+	protected function _getWidgetHandlerFromCache($class)
+	{
+		if(!isset($this->_widgetHandlerCache[$class]))
+		{
+			$this->_widgetHandlerCache[$class] = new $class();
+		}
+
+		return $this->_widgetHandlerCache[$class];
 	}
 }

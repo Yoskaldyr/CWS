@@ -2,6 +2,15 @@
 
 class CWS_Listener
 {
+	public static function initDependencies(XenForo_Dependencies_Abstract $dependencies, array $data)
+	{
+		/* @var $widgetModel CWS_Model_Widget */
+		$widgetModel = XenForo_Model::create('CWS_Model_Widget');
+		$allWidgets = $widgetModel->rebuildWidgetCache();
+
+		XenForo_Application::set('widgets', $allWidgets);
+	}
+
 	public static function loadClassModel($class, array &$extend)
 	{
 		if ($class == 'XenForo_Model_AddOn')
@@ -32,8 +41,7 @@ class CWS_Listener
 			$viewRenderer instanceof XenForo_ViewRenderer_HtmlPublic
 		)
 		{
-			CWS_ControllerHelper_Widget::$innerParams = $controllerResponse->params;
-			$containerParams['widgets'] = & CWS_ViewRenderer_HtmlPublic::$widgets;
+			CWS_WidgetHandler_Abstract::$innerParams = $controllerResponse->params;
 			$viewRenderer = new CWS_ViewRenderer_HtmlPublic($viewRenderer);
 		}
 	}

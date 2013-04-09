@@ -69,12 +69,6 @@ class CWS_Model_Widget extends XenForo_Model
 		', 'widget_id');
 	}
 
-	public function prepareWidget(array $widget)
-	{
-		$widget['options'] = XenForo_Helper_Criteria::unserializeCriteria($widget['options']);
-		return $widget;
-	}
-
 	public function rebuildWidgetCache()
 	{
 		$cache = array();

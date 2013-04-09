@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="CWS" title="Custom Widget System" version_string="Alpha 3" version_id="3" url="" install_callback_class="CWS_Install" install_callback_method="build" uninstall_callback_class="CWS_Install" uninstall_callback_method="destroy">
+<addon addon_id="CWS" title="Custom Widget System" version_string="Alpha 4" version_id="3" url="" install_callback_class="CWS_Install" install_callback_method="build" uninstall_callback_class="CWS_Install" uninstall_callback_method="destroy">
   <admin_navigation>
     <navigation navigation_id="cwsWidgetList" parent_navigation_id="cwsWidgets" display_order="1" link="widgets" admin_permission_id="option" debug_only="0" hide_no_children="0"/>
     <navigation navigation_id="cwsWidgets" parent_navigation_id="setup" display_order="26" link="widgets" admin_permission_id="option" debug_only="0" hide_no_children="1"/>
@@ -149,6 +149,7 @@
   <code_event_listeners>
     <listener event_id="controller_post_dispatch" execute_order="10" callback_class="CWS_Listener" callback_method="controllerPostDispatch" active="1" description=""/>
     <listener event_id="front_controller_pre_view" execute_order="10" callback_class="CWS_Listener" callback_method="frontControllerPreView" active="1" description=""/>
+    <listener event_id="init_dependencies" execute_order="10" callback_class="CWS_Listener" callback_method="initDependencies" active="1" description=""/>
     <listener event_id="load_class_datawriter" execute_order="10" callback_class="CWS_Listener" callback_method="loadClassDataWriter" active="1" description=""/>
     <listener event_id="load_class_model" execute_order="10" callback_class="CWS_Listener" callback_method="loadClassModel" active="1" description=""/>
     <listener event_id="template_create" execute_order="10" callback_class="CWS_Listener" callback_method="templateCreate" active="1" description=""/>
@@ -165,6 +166,8 @@
     <phrase title="admin_navigation_cwsWidgets" version_id="1" version_string=""><![CDATA[Widgets]]></phrase>
     <phrase title="admin_navigation_cwsWidgetList" version_id="1" version_string=""><![CDATA[Widget List]]></phrase>
     <phrase title="cws_argument" version_id="1" version_string="Alpha 2"><![CDATA[Argument]]></phrase>
+    <phrase title="cws_callback_class_of_widget_x_must_extend_class_y" version_id="3" version_string="Alpha 3"><![CDATA[Callback class of widget {widget} must extend class {class}.]]></phrase>
+    <phrase title="cws_callback_class_must_extend_class_y" version_id="3" version_string="Alpha 3"><![CDATA[Callback class must extend class {class}.]]></phrase>
     <phrase title="cws_confirm_deletion_of_widget" version_id="1" version_string=""><![CDATA[Confirm deletion of widget]]></phrase>
     <phrase title="cws_create_new_widget" version_id="1" version_string=""><![CDATA[Create new widget]]></phrase>
     <phrase title="cws_delete_widget" version_id="1" version_string=""><![CDATA[Delete widget]]></phrase>
@@ -330,37 +333,37 @@
   </templates>
   <bb_code_media_sites/>
   <widgets>
-    <widget widget_id="default-sidebar" description="Default XenForo Sidebar" callback_class="CWS_ControllerHelper_Default" callback_method="actionDefaultSidebar" dismissible="0" active="1" position="right_sidebar" display_order="5">
+    <widget widget_id="default-sidebar" description="Default XenForo Sidebar" callback_class="CWS_WidgetHandler_Default" callback_method="actionDefaultSidebar" dismissible="0" active="1" position="right_sidebar" display_order="5">
       <options><![CDATA[a:0:{}]]></options>
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:0:{}]]></page_criteria>
     </widget>
-    <widget widget_id="forum-stats" description="" callback_class="CWS_ControllerHelper_Default" callback_method="actionBoardTotals" dismissible="0" active="1" position="left_sidebar" display_order="30">
+    <widget widget_id="forum-stats" description="" callback_class="CWS_WidgetHandler_Default" callback_method="actionBoardTotals" dismissible="0" active="1" position="left_sidebar" display_order="30">
       <options><![CDATA[a:0:{}]]></options>
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:0:{}]]></page_criteria>
     </widget>
-    <widget widget_id="online-staff" description="" callback_class="CWS_ControllerHelper_Default" callback_method="actionOnlineStaff" dismissible="0" active="1" position="left_sidebar" display_order="10">
+    <widget widget_id="online-staff" description="" callback_class="CWS_WidgetHandler_Default" callback_method="actionOnlineStaff" dismissible="0" active="1" position="left_sidebar" display_order="10">
       <options><![CDATA[a:0:{}]]></options>
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
     </widget>
-    <widget widget_id="online-users" description="" callback_class="CWS_ControllerHelper_Default" callback_method="actionOnlineUsers" dismissible="0" active="1" position="left_sidebar" display_order="20">
+    <widget widget_id="online-users" description="" callback_class="CWS_WidgetHandler_Default" callback_method="actionOnlineUsers" dismissible="0" active="1" position="left_sidebar" display_order="20">
       <options><![CDATA[a:0:{}]]></options>
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
     </widget>
-    <widget widget_id="share-page" description="" callback_class="CWS_ControllerHelper_Default" callback_method="actionSharePage" dismissible="0" active="1" position="left_sidebar" display_order="40">
+    <widget widget_id="share-page" description="" callback_class="CWS_WidgetHandler_Default" callback_method="actionSharePage" dismissible="0" active="1" position="left_sidebar" display_order="40">
       <options><![CDATA[a:0:{}]]></options>
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
     </widget>
-    <widget widget_id="template-block" description="" callback_class="CWS_ControllerHelper_Template" callback_method="actionTemplate" dismissible="0" active="1" position="left_sidebar" display_order="37">
+    <widget widget_id="template-block" description="" callback_class="CWS_WidgetHandler_Template" callback_method="actionTemplate" dismissible="0" active="1" position="left_sidebar" display_order="37">
       <options><![CDATA[a:1:{s:14:"template_title";s:25:"cws_widget_template_block";}]]></options>
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:0:{}]]></page_criteria>
     </widget>
-    <widget widget_id="visitor-panel" description="" callback_class="CWS_ControllerHelper_Template" callback_method="actionTemplate" dismissible="0" active="1" position="left_sidebar" display_order="1">
+    <widget widget_id="visitor-panel" description="" callback_class="CWS_WidgetHandler_Template" callback_method="actionTemplate" dismissible="0" active="1" position="left_sidebar" display_order="1">
       <options><![CDATA[a:1:{s:14:"template_title";s:21:"sidebar_visitor_panel";}]]></options>
       <user_criteria><![CDATA[a:0:{}]]></user_criteria>
       <page_criteria><![CDATA[a:0:{}]]></page_criteria>
