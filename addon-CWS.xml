@@ -49,7 +49,9 @@
 					results="5" inputclass="AutoComplete AcSingle WidgetOptions" 
 					data-acurl="{xen:adminlink 'widgets/search-class'}"/>
 				::
-				<xen:textbox placeholder="{xen:phrase method}" name="callback_method" value="{$widget.callback_method}" size="25" />
+				<xen:textbox id="WidgetMethod" placeholder="{xen:phrase method}" name="callback_method" value="{$widget.callback_method}" size="25" type="search"
+					results="5" inputclass="AutoComplete AcSingle" 
+					data-acurl="{xen:adminlink 'widgets/search-method', '', 'class={$widget.callback_class}'}"/>
 			</xen:controlunit>
                         
                         <div id="WidgetOptions">{xen:raw $_subView}</div>
@@ -173,10 +175,10 @@
     <phrase title="cws_enable_disable_this_widget" version_id="1" version_string=""><![CDATA[Enable / Disable this widget]]></phrase>
     <phrase title="cws_left_sidebar" version_id="1" version_string=""><![CDATA[Left Sidebar]]></phrase>
     <phrase title="cws_no_widgets_have_been_created_yet" version_id="1" version_string=""><![CDATA[No widget have been created yet.]]></phrase>
-    <phrase title="cws_please_confirm_that_you_want_to_delete_following_widget" version_id="1" version_string=""><![CDATA[Please confirm that you want to delete the following widget]]></phrase>
     <phrase title="cws_please_enter_title_using_only_alphanumeric_dot_space" version_id="1" version_string=""><![CDATA[Please enter a title using only a-z, A-Z, 0-9, _ and . characters and spaces.]]></phrase>
     <phrase title="cws_please_enter_widget_id_using_alphanumeric" version_id="2" version_string="Alpha 3"><![CDATA[Please enter a widget ID/URL portion using a-z, 0-9, _, and - characters only.]]></phrase>
     <phrase title="cws_please_enter_valid_widget_id" version_id="2" version_string="Alpha 3"><![CDATA[Please enter a valid widget ID.]]></phrase>
+    <phrase title="cws_please_confirm_that_you_want_to_delete_following_widget" version_id="1" version_string=""><![CDATA[Please confirm that you want to delete the following widget]]></phrase>
     <phrase title="cws_requested_widget_not_found" version_id="1" version_string=""><![CDATA[The requested widget could not be found.]]></phrase>
     <phrase title="cws_right_sidebar" version_id="1" version_string=""><![CDATA[Right Sidebar]]></phrase>
     <phrase title="cws_save_widget" version_id="1" version_string=""><![CDATA[Save widget]]></phrase>

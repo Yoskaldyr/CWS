@@ -11,6 +11,7 @@
 			this.$input = $input;
 			this.url = $('.WidgetOptions').data('optionsUrl');
 			this.$widgetOptions = $('#WidgetOptions');
+            this.$widgetMethod = $('#WidgetMethod');
 
 			$('.AutoComplete.WidgetOptions').bind(
 			{
@@ -39,10 +40,18 @@
 
 		fetchText: function()
 		{
-			if (!$('#WidgetClass').val())
+            var callbackClass = $('#WidgetClass').val();
+
+			if (!callbackClass)
 			{
 				return;
 			}
+
+
+            $('#WidgetMethod').data('acurl', 'admin.php?widgets/search-method&class='+callbackClass+'&_xfResponseType=json');
+           // $('#WidgetMethod').attr('data-acurl', 'admin.php?widgets/search-method&class='+callbackClass+'&_xfResponseType=json');
+            XenForo.activate($('#WidgetMethod'));
+
 
 			if (this.xhr)
 			{
@@ -51,7 +60,7 @@
 
 			this.xhr = XenForo.ajax(
 				this.url,
-				{ callback_class: $('#WidgetClass').val(), widget_id: $('#WidgetForm').data('widgetId')},
+				{ callback_class: callbackClass, widget_id: $('#WidgetForm').data('widgetId')},
 				$.context(this, 'ajaxSuccess'),
 				{ error: false }
 			);

@@ -159,7 +159,7 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 	{
 		$widgetModel = $this->_getWidgetModel();
 
-		$className = $this->_input->filterSingle('callback_class', XenForo_Input::STRING);
+		$classNameOrig = $this->_input->filterSingle('callback_class', XenForo_Input::STRING);
 		$widgetId = $this->_input->filterSingle('widget_id', XenForo_Input::STRING);
 
 		$widget = $this->_getWidgetModel()->getWidgetById($widgetId);
@@ -169,12 +169,43 @@ class CWS_ControllerAdmin_Widget extends XenForo_ControllerAdmin_Abstract
 			$widget = $widgetModel->prepareWidget($widget);
 		}
 
-		$className = is_callable(array($className, 'getOptionsForEdit')) ? $className : 'CWS_ControllerHelper_Widget';
+		$className = is_callable(array($classNameOrig, 'getOptionsForEdit')) ? $classNameOrig : 'CWS_ControllerHelper_Widget';
 
 		/* @var $widgetHelper CWS_ControllerHelper_Widget */
 		$widgetHelper = $this->getHelper($className);
 
-		return $widgetHelper->getOptionsForEdit($widget);
+		$response = $widgetHelper->getOptionsForEdit($widget);
+		$response->params['callbackClass'] = $classNameOrig;
+
+		return $response;
+	}
+
+	public function actionSearchMethod()
+	{
+		$q = $this->_input->filterSingle('q', XenForo_Input::STRING);
+
+		$classNameOrig = $this->_input->filterSingle('class', XenForo_Input::STRING);
+
+		$methods = array();
+
+		if(strpos($classNameOrig, 'ControllerHelper') && XenForo_Application::autoload($classNameOrig))
+		{
+			foreach(get_class_methods($classNameOrig) as $method)
+			{
+				if(strpos($method, $q) === 0 && !in_array($method, array('__construct', 'getOptionsForEdit', 'filterOptionsForSave')))
+				{
+					$methods[] = $method;
+				}
+			}
+
+			sort($methods);
+		}
+
+		$viewParams = array(
+			'values' => $methods
+		);
+
+		return $this->responseView('CWS_ViewAdmin_Widget_SearchParam', '', $viewParams);
 	}
 
 	public function actionSearchClass()
