@@ -8,6 +8,33 @@
   <admin_style_properties/>
   <admin_templates>
     <template title="cws_options_template"><![CDATA[<xen:textboxunit label="{xen:phrase cws_template_title}:" name="options[template_title]" value="{$widget.options.template_title}" />]]></template>
+    <template title="cws_options_threads"><![CDATA[<xen:textboxunit label="{xen:phrase cws_widget_title}:" name="options[title]" value="{$options.title}">
+	<xen:explain>{xen:phrase cws_widget_threads_title_explain}</xen:explain>
+</xen:textboxunit>
+
+<xen:textboxunit label="{xen:phrase cws_limit}:" name="options[limit]" value="{$options.limit}">
+	<xen:explain>{xen:phrase cwf_limit_explain, "items={xen:phrase cws_threads}"}</xen:explain>
+</xen:textboxunit>
+
+<xen:selectunit label="{xen:phrase cws_widget_threads_type}:" name="options[type]" value="{$options.type}">
+	<xen:option value="new">{xen:phrase cws_widget_threads_type_new}</xen:option>
+	<xen:option value="recent">{xen:phrase cws_widget_threads_type_recent}</xen:option>
+	<xen:option value="popular">{xen:phrase cws_widget_threads_type_popular}</xen:option>
+	<xen:option value="polls">{xen:phrase polls}</xen:option>
+</xen:selectunit>
+
+<xen:textboxunit label="{xen:phrase cws_widget_threads_popular_cutoff}:" name="options[cutoff]" value="{$options.cutoff}">
+	<xen:explain>{xen:phrase cws_widget_threads_popular_cutoff_explain}</xen:explain>
+</xen:textboxunit>
+
+<xen:selectunit label="{xen:phrase cws_threads_forums}:" name="options[node_ids]" value="" size="5" multiple="true" inputclass="textCtrl">
+	<xen:foreach loop="$nodes" value="$_node">
+		<xen:option value="{$_node.node_id}"
+			selected="{$options.node_ids} AND in_array({$_node.node_id}, {$options.node_ids})">
+				{xen:string repeat, '&nbsp; &nbsp; ', $_node.depth}{$_node.title}</xen:option>
+	</xen:foreach>
+	<xen:explain>{xen:phrase cws_threads_forums_explain}</xen:explain>
+</xen:selectunit>]]></template>
     <template title="cws_widget_edit"><![CDATA[<xen:title>{xen:if '{$widget.widget_id}', '{xen:phrase cws_edit_widget}: {$widget.title}', '{xen:phrase cws_create_new_widget}'}</xen:title>
 
 <xen:if is="{$widget.widget_id}">
@@ -147,12 +174,13 @@
   </admin_templates>
   <code_events/>
   <code_event_listeners>
-    <listener event_id="controller_post_dispatch" execute_order="10" callback_class="CWS_Listener" callback_method="controllerPostDispatch" active="1" description=""/>
-    <listener event_id="front_controller_pre_view" execute_order="10" callback_class="CWS_Listener" callback_method="frontControllerPreView" active="1" description=""/>
-    <listener event_id="init_dependencies" execute_order="10" callback_class="CWS_Listener" callback_method="initDependencies" active="1" description=""/>
-    <listener event_id="load_class_datawriter" execute_order="10" callback_class="CWS_Listener" callback_method="loadClassDataWriter" active="1" description=""/>
-    <listener event_id="load_class_model" execute_order="10" callback_class="CWS_Listener" callback_method="loadClassModel" active="1" description=""/>
-    <listener event_id="template_create" execute_order="10" callback_class="CWS_Listener" callback_method="templateCreate" active="1" description=""/>
+    <listener event_id="controller_post_dispatch" execute_order="10" callback_class="CWS_Static" callback_method="controllerPostDispatch" active="1" description=""/>
+    <listener event_id="front_controller_pre_view" execute_order="10" callback_class="CWS_Static" callback_method="frontControllerPreView" active="1" description=""/>
+    <listener event_id="front_controller_pre_dispatch" execute_order="10" callback_class="CWS_Static" callback_method="frontControllerPreDispatch" active="1" description=""/>
+    <listener event_id="init_dependencies" execute_order="10" callback_class="CWS_Static" callback_method="initDependencies" active="1" description=""/>
+    <listener event_id="load_class_datawriter" execute_order="10" callback_class="CWS_Static" callback_method="loadClassDataWriter" active="1" description=""/>
+    <listener event_id="load_class_model" execute_order="10" callback_class="CWS_Static" callback_method="loadClassModel" active="1" description=""/>
+    <listener event_id="template_create" execute_order="10" callback_class="CWS_Static" callback_method="templateCreate" active="1" description=""/>
   </code_event_listeners>
   <cron/>
   <email_templates/>
@@ -182,6 +210,7 @@
     <phrase title="cws_please_enter_widget_id_using_alphanumeric" version_id="2" version_string="Alpha 3"><![CDATA[Please enter a widget ID/URL portion using a-z, 0-9, _, and - characters only.]]></phrase>
     <phrase title="cws_please_enter_valid_widget_id" version_id="2" version_string="Alpha 3"><![CDATA[Please enter a valid widget ID.]]></phrase>
     <phrase title="cws_please_confirm_that_you_want_to_delete_following_widget" version_id="1" version_string=""><![CDATA[Please confirm that you want to delete the following widget]]></phrase>
+    <phrase title="cws_posted_by_x" version_id="3" version_string="Alpha 4"><![CDATA[Posted by {user}]]></phrase>
     <phrase title="cws_requested_widget_not_found" version_id="1" version_string=""><![CDATA[The requested widget could not be found.]]></phrase>
     <phrase title="cws_right_sidebar" version_id="1" version_string=""><![CDATA[Right Sidebar]]></phrase>
     <phrase title="cws_save_widget" version_id="1" version_string=""><![CDATA[Save widget]]></phrase>
@@ -330,45 +359,26 @@
 </div>]]></template>
     <template title="cws_widget_default_sidebar" version_id="2" version_string="Alpha 3"><![CDATA[<xen:if is="!{$noVisitorPanel}"><xen:include template="sidebar_visitor_panel" /></xen:if>
 {xen:raw $sidebar}]]></template>
+    <template title="cws_widget_threads" version_id="3" version_string="Alpha 4"><![CDATA[<div class="section">
+	<div class="secondaryContent statsList" id="boardStats">
+		<h3>{$widgetTitle}</h3>
+		<div class="avatarList">
+		<ul>
+			<xen:foreach loop="$threads" value="$thread">
+			<li>
+				<xen:comment><xen:avatar user="$thread" size="s" img="true" /></xen:comment>
+				<a href="{xen:link threads, $thread}">{xen:helper snippet, $thread.title, 45}</a>
+				<div class="userTitle">{xen:phrase cws_posted_by_x, 'user=<a href="{xen:link 'members', {$thread}}">{$thread.username}</a>'} <xen:datetime time="{$thread.post_date}" /></div>
+			</li>
+			</xen:foreach>
+		</ul>
+		</div>
+
+	</div>
+</div>
+]]></template>
   </templates>
   <bb_code_media_sites/>
-  <widgets>
-    <widget widget_id="default-sidebar" description="Default XenForo Sidebar" callback_class="CWS_WidgetHandler_Default" callback_method="actionDefaultSidebar" dismissible="0" active="1" position="right_sidebar" display_order="5">
-      <options><![CDATA[a:0:{}]]></options>
-      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
-      <page_criteria><![CDATA[a:0:{}]]></page_criteria>
-    </widget>
-    <widget widget_id="forum-stats" description="" callback_class="CWS_WidgetHandler_Default" callback_method="actionBoardTotals" dismissible="0" active="1" position="left_sidebar" display_order="30">
-      <options><![CDATA[a:0:{}]]></options>
-      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
-      <page_criteria><![CDATA[a:0:{}]]></page_criteria>
-    </widget>
-    <widget widget_id="online-staff" description="" callback_class="CWS_WidgetHandler_Default" callback_method="actionOnlineStaff" dismissible="0" active="1" position="left_sidebar" display_order="10">
-      <options><![CDATA[a:0:{}]]></options>
-      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
-      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
-    </widget>
-    <widget widget_id="online-users" description="" callback_class="CWS_WidgetHandler_Default" callback_method="actionOnlineUsers" dismissible="0" active="1" position="left_sidebar" display_order="20">
-      <options><![CDATA[a:0:{}]]></options>
-      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
-      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
-    </widget>
-    <widget widget_id="share-page" description="" callback_class="CWS_WidgetHandler_Default" callback_method="actionSharePage" dismissible="0" active="1" position="left_sidebar" display_order="40">
-      <options><![CDATA[a:0:{}]]></options>
-      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
-      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
-    </widget>
-    <widget widget_id="template-block" description="" callback_class="CWS_WidgetHandler_Template" callback_method="actionTemplate" dismissible="0" active="1" position="left_sidebar" display_order="37">
-      <options><![CDATA[a:1:{s:14:"template_title";s:25:"cws_widget_template_block";}]]></options>
-      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
-      <page_criteria><![CDATA[a:0:{}]]></page_criteria>
-    </widget>
-    <widget widget_id="visitor-panel" description="" callback_class="CWS_WidgetHandler_Template" callback_method="actionTemplate" dismissible="0" active="1" position="left_sidebar" display_order="1">
-      <options><![CDATA[a:1:{s:14:"template_title";s:21:"sidebar_visitor_panel";}]]></options>
-      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
-      <page_criteria><![CDATA[a:0:{}]]></page_criteria>
-    </widget>
-  </widgets>
   <template_modifications>
     <modification title="cws_page_container" template_title="PAGE_CONTAINER" execute_order="10" modification_type="preg_replace" callback_class="" callback_method="" description="" version_id="2" version_string="Alpha 3" active="1">
       <search_value><![CDATA[#<!DOCTYPE html>(.*){xen:raw \$contents}(.*)<xen:if is="!{\$noVisitorPanel}">.*{xen:raw \$sidebar}#s]]></search_value>
@@ -397,4 +407,46 @@ $2
 <xen:foreach loop="$widgets.right_sidebar" value="$rightWidget">{xen:raw $rightWidget}</xen:foreach>]]></replace_value>
     </modification>
   </template_modifications>
+  <widgets>
+    <widget widget_id="default-sidebar" description="Default XenForo Sidebar" callback_class="CWS_ControllerWidget_Default" callback_method="actionDefaultSidebar" dismissible="0" active="0" position="right_sidebar" display_order="5">
+      <options><![CDATA[a:0:{}]]></options>
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:0:{}]]></page_criteria>
+    </widget>
+    <widget widget_id="forum-stats" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionBoardTotals" dismissible="0" active="1" position="right_sidebar" display_order="30">
+      <options><![CDATA[a:0:{}]]></options>
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:0:{}]]></page_criteria>
+    </widget>
+    <widget widget_id="last-threads" description="" callback_class="CWS_ControllerWidget_Threads" callback_method="actionThreads" dismissible="0" active="1" position="right_sidebar" display_order="100">
+      <options><![CDATA[a:5:{s:5:"title";s:27:"Последние темы";s:5:"limit";s:2:"10";s:4:"type";s:6:"recent";s:6:"cutoff";s:1:"7";s:8:"node_ids";a:19:{i:0;s:1:"3";i:1;s:1:"4";i:2;s:2:"14";i:3;s:1:"6";i:4;s:2:"80";i:5;s:2:"76";i:6;s:2:"15";i:7;s:2:"81";i:8;s:2:"21";i:9;s:2:"16";i:10;s:2:"24";i:11;s:2:"26";i:12;s:2:"19";i:13;s:2:"78";i:14;s:2:"60";i:15;s:2:"30";i:16;s:2:"71";i:17;s:2:"38";i:18;s:2:"59";}}]]></options>
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:0:{}]]></page_criteria>
+    </widget>
+    <widget widget_id="online-staff" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionOnlineStaff" dismissible="0" active="1" position="left_sidebar" display_order="10">
+      <options><![CDATA[a:0:{}]]></options>
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
+    </widget>
+    <widget widget_id="online-users" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionOnlineUsers" dismissible="0" active="1" position="left_sidebar" display_order="20">
+      <options><![CDATA[a:0:{}]]></options>
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
+    </widget>
+    <widget widget_id="share-page" description="" callback_class="CWS_ControllerWidget_Default" callback_method="actionSharePage" dismissible="0" active="1" position="left_sidebar" display_order="40">
+      <options><![CDATA[a:0:{}]]></options>
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:1:{i:0;a:2:{s:4:"rule";s:10:"controller";s:4:"data";a:2:{s:4:"name";s:30:"XenForo_ControllerPublic_Index";s:6:"action";s:0:"";}}}]]></page_criteria>
+    </widget>
+    <widget widget_id="template-block" description="" callback_class="CWS_ControllerWidget_Template" callback_method="actionTemplate" dismissible="0" active="1" position="right_sidebar" display_order="37">
+      <options><![CDATA[a:1:{s:14:"template_title";s:25:"cws_widget_template_block";}]]></options>
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:0:{}]]></page_criteria>
+    </widget>
+    <widget widget_id="visitor-panel" description="" callback_class="CWS_ControllerWidget_Template" callback_method="actionTemplate" dismissible="0" active="1" position="right_sidebar" display_order="1">
+      <options><![CDATA[a:1:{s:14:"template_title";s:21:"sidebar_visitor_panel";}]]></options>
+      <user_criteria><![CDATA[a:0:{}]]></user_criteria>
+      <page_criteria><![CDATA[a:0:{}]]></page_criteria>
+    </widget>
+  </widgets>
 </addon>
